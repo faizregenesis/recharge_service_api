@@ -6,6 +6,7 @@ dotenv.config();
 import information from './routes/info/information.routes';
 import experience from './routes/experience/experience.routes';
 import properties from './routes/properties/properties.routes';
+import detailExperience from './routes/detail_experience/detail.experience.routes';
 
 class App {
     public httpServer = express();
@@ -27,6 +28,7 @@ class App {
 
         this.httpServer.use('/', information);
         this.httpServer.use('/service-api', experience);
+        this.httpServer.use('/service-api', detailExperience);
         this.httpServer.use('/service-api', properties);
 
         this.httpServer.use((err: Error, req: Request, res: Response, next: NextFunction) => {

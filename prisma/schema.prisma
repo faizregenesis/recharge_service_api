@@ -44,7 +44,7 @@ model detail_experience {
   binaural_beats_isochronic_tones Boolean
   direct_neutral_stimulation      Boolean
   duration                        Decimal     @db.Decimal(5, 2)
-  experience_id                   String      @db.Uuid
+  experience_id                   String?      @db.Uuid
   song                            String?
   video                           String?
   sound_scape                     Int
