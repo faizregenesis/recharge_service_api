@@ -1,37 +1,16 @@
-import { WebSocketServer } from "ws";
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-
 const prisma = new PrismaClient();
-const wss = new WebSocketServer({ 
-    port: 8080 
-});
 
-wss.on("connection", (ws) => {
-    console.log("Client connected");
-
-    ws.on("message", async (message) => {
-        if (message.toString() === "get_experiences") {
-            const experienceData = await prisma.experiences.findMany({
-                where: { 
-                    deleted_at: null 
-                },
-            });
-
-            console.log(experienceData);
-            ws.send(JSON.stringify(experienceData));
-        }
-    });
-
-    ws.on("close", () => console.log("Client disconnected"));
-});
-
-const experience = async (req: Request, res: Response): Promise<any> => {
+const experience = async (req: Request, res: Response):Promise<any> => {
     try {
         const experienceData = await prisma.experiences.findMany({
             where: { 
                 deleted_at: null 
             },
+            orderBy: {
+                created_date: "desc"
+            }
         });
 
         if (experienceData.length === 0) {
@@ -41,8 +20,11 @@ const experience = async (req: Request, res: Response): Promise<any> => {
             });
         }
 
+        const totalData = experienceData.length
+
         return res.status(200).json({ 
             message: "success to get experience data", 
+            total_data: totalData,
             data: experienceData 
         });
     } catch (error) {
@@ -54,27 +36,27 @@ const experience = async (req: Request, res: Response): Promise<any> => {
     }
 };
 
-const properties = async (req: Request, res: Response): Promise<any> => {
+const postExperience = async (req: Request, res: Response): Promise<any> => {
     try {
-        const propertiesData = await prisma.experiences_properties.findMany({
-            where: { 
-                deleted_at: null 
-            },
-        });
+        const experiences = req.body;
 
-        if (propertiesData.length === 0) {
-            return res.status(404).json({ 
-                message: "database empty", 
-                data: propertiesData 
+        if (!Array.isArray(experiences) || experiences.length === 0) {
+            return res.status(400).json({ 
+                message: "Invalid request data, expected an array of objects." 
             });
         }
 
-        return res.status(200).json({ 
-            message: "success to get experience data", 
-            data: propertiesData 
+        const data = await prisma.experiences.createMany({
+            data: experiences,
+            skipDuplicates: true,
         });
+
+        return res.status(201).json({
+            message: "Success to create experience data", 
+            count: data.count,
+        });
+
     } catch (error) {
-        console.error("Error fetching experience data:", error);
         res.status(500).json({ 
             message: "Internal server error.", 
             error: error instanceof Error ? error.message : error 
@@ -84,5 +66,5 @@ const properties = async (req: Request, res: Response): Promise<any> => {
 
 export {
     experience, 
-    properties
+    postExperience
 }

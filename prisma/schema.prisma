@@ -67,7 +67,7 @@ model experiences_properties {
   order                  Int         @db.SmallInt
   tooltip                String
   icon                   String?
-  experience_id          String      @db.Uuid
+  experience_id          String?      @db.Uuid
 
   created_at             DateTime    @default(now()) @db.Timestamptz(6)
   updated_at             DateTime    @default(now()) @db.Timestamptz(6)
