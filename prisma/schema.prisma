@@ -145,3 +145,32 @@ model terms_and_conditions_questions {
 
   @@index([id, active], map: "terms_and_conditions_questions_idx")
 }
+
+model self_development {
+  id                    String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fk_pod_id             String?        @db.Uuid
+  self_development_name String?
+  description           String?
+  icon                  String?
+
+  created_date          DateTime?      @default(now()) @db.Timestamptz(6)
+  updated_date          DateTime?      @default(now()) @db.Timestamptz(6)
+  deleted_at            DateTime?      @db.Timestamp(6)
+}
+
+model self_development_sound {
+  id                    String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  self_development_id   String?           @db.Uuid
+
+  sound_code            Int?
+  duration              String?
+  description           String?
+  sound_path            String?
+  file_path             String?
+  title                 String?
+  caption               String?
+
+  created_date          DateTime?        @default(now()) @db.Timestamptz(6)
+  updated_date          DateTime?        @default(now()) @db.Timestamptz(6)
+  deleted_at            DateTime?        @db.Timestamp(6)
+}

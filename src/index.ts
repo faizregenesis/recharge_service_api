@@ -13,12 +13,9 @@ const app = express();
 app.use(express.json());
 app.use(routes); 
 
-const port = `${process.env.PORT}`;
+const port = 3000;
 const host = `${process.env.HOST}`;
 
-console.log("ini adalah port:", port);
-console.log("ini adalah host:", `${host}`);
-
-app.listen(3000, host, () => {
-    console.log(`Server is running on http://${host}:${3000}`);
+app.listen(port, host, () => {
+    console.log(`Server is running on http://${host}:${port}`);
 });
