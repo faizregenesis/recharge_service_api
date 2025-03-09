@@ -5,6 +5,7 @@ dotenv.config();
 import { spreadUserData } from './spread.user';
 
 const exchangeName = process.env.USER_EXCHANGE;
+const userSpreadExchange = process.env.USER_SPREAD_EXCHANGE;
 const connectionUrl = process.env.RABBITMQ_URL;
 
 if (!exchangeName || !connectionUrl) {
@@ -102,4 +103,61 @@ const consumeUserData = async () => {
     }
 };
 
-export { consumeUserData };
+const consumeUsersDataUpdate = async () => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(`${userSpreadExchange}`, 'fanout', { durable: true });
+
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, `${userSpreadExchange}`, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mAdmin is waiting for messages on queue (sync user data): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (msg) {
+                try {
+                    const messageContent = msg.content.toString();
+                    
+                    const data = JSON.parse(messageContent);
+                    console.log("Received user data Message:", data);
+
+                    const existUserData = await prisma.user.findUnique({
+                        where: { 
+                            user_id: data.user_id 
+                        }
+                    });
+
+                    if (existUserData) {
+                        const updateUserData = await prisma.user.update({
+                            where: { 
+                                user_id: data.user_id
+                            },
+                            data: data
+                        });
+                        console.log("user data updated:", updateUserData.user_id);
+                    } else if (existUserData === null) {
+                        // const createUserData = await prisma.user.create({
+                        //     data: data
+                        // });
+                        console.log("data not found", data.user_id);
+                    }
+
+                    channel.ack(msg);
+                } catch (error) {
+                    console.error('\x1b[31mError processing message:', error, '\x1b[0m');
+                    channel.nack(msg, false, true);
+                }
+            }
+        });
+    } catch (error) {
+        console.error('\x1b[31mError initializing consumer:', error, '\x1b[0m');
+    }
+};
+
+export { 
+    consumeUserData, 
+    consumeUsersDataUpdate
+};
