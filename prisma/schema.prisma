@@ -174,3 +174,64 @@ model self_development_sound {
   updated_date          DateTime?        @default(now()) @db.Timestamptz(6)
   deleted_at            DateTime?        @db.Timestamp(6)
 }
+
+model socket_topics {
+  id                      String    @id(map: "socket_topic_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  module_name             String?
+  event_description       String?
+  topic                   String?
+  action                  String?
+  retain                  Boolean?
+  publish_example_value   Json?
+  subscribe_example_value Json?
+  value_range             String?
+  remarks                 String?
+  keyword                 String?
+  auth_status             Boolean?
+
+  deleted_at              DateTime? @db.Timestamp(6)
+  created_date            DateTime  @default(now()) @db.Timestamptz(6)
+  update_date             DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([id], map: "socket_topic_idx")
+}
+
+
+model pod_topics {
+  id                      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  module_name             String?
+  event_description       String?
+  topic                   String?
+  action                  String?
+  retain                  Boolean?
+  publish_example_value   Json?
+  subscribe_example_value Json?
+  value_range             String?
+  remarks                 String?
+  keyword                 String?
+
+  pod_history             pod_history[]
+
+  deleted_at              DateTime?     @db.Timestamp(6)
+  created_date            DateTime      @default(now()) @db.Timestamptz(6)
+  update_date             DateTime      @default(now()) @db.Timestamptz(6)
+
+  @@index([id], map: "pod_topics_idx")
+}
+
+model pod_history {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  fk_pod_topic_id String     @db.Uuid
+
+  action          String?
+  value           Json?
+
+  pod_topics      pod_topics @relation(fields: [fk_pod_topic_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pod_topic_id")
+
+  created_date    DateTime   @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime?  @db.Timestamp(6)
+  update_date     DateTime   @default(now()) @db.Timestamptz(6)
+
+  @@index([id, fk_pod_topic_id], map: "pod_history_idx")
+}
