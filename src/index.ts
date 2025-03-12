@@ -8,7 +8,7 @@ import {
     runFunctionsInOrder, 
 } from './order.sync.manager';
 
-runInitialFetchingData()
+// runInitialFetchingData()
 runFunctionsInOrder()
 
 const app = express();
