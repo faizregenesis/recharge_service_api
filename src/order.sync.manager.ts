@@ -5,26 +5,20 @@ import {
 } from './routes/comsume_user/consumer.pod.user';
 
 import {
-    fetchInitialSocketTopic, 
-    fetchInitialPodTopic
-} from './routes/spread_socket_topic/spread.socket.topic.controller';
+    syncDisclaimerData
+} from './routes/consumeDisclaimer/consume.disclaimer';
 
-
-const runInitialFetchingData = async () => {
-    try {
-        await fetchInitialSocketTopic()
-        await fetchInitialPodTopic()
-
-    } catch (error) {
-        console.error('Error occurred while executing functions:', error);
-    }
-};
+import {
+    consumeUpdateQuestionMatrix, 
+} from './routes/consume_matrix/consumer.matrix';
 
 const runFunctionsInOrder = async () => {
     try {
         await consumeUserData()
         await consumeUsersDataUpdate()
         await consumeResetPassword()
+        await syncDisclaimerData()
+        await consumeUpdateQuestionMatrix(), 
 
         console.log('All functions executed successfully in order');
     } catch (error) {
@@ -34,5 +28,4 @@ const runFunctionsInOrder = async () => {
 
 export {
     runFunctionsInOrder, 
-    runInitialFetchingData
 }

@@ -235,3 +235,17 @@ model pod_history {
 
   @@index([id, fk_pod_topic_id], map: "pod_history_idx")
 }
+
+model template_properties {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  pod_id      String?   @db.Uuid
+
+  code        String    @unique
+  value       String
+  description String
+
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime  @default(now()) @db.Timestamptz(6)
+  deleted_at  DateTime? @db.Timestamptz(6)
+}

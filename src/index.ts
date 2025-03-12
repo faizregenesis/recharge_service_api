@@ -4,18 +4,16 @@ dotenv.config();
 import routes from './app';
 
 import {
-    runInitialFetchingData, 
     runFunctionsInOrder, 
 } from './order.sync.manager';
 
-// runInitialFetchingData()
 runFunctionsInOrder()
 
 const app = express();
 app.use(express.json());
 app.use(routes); 
 
-const port = 3000;
+const port = 8080;
 const host = `${process.env.HOST}`;
 
 app.listen(port, host, () => {
