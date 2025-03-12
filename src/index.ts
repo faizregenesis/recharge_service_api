@@ -4,9 +4,11 @@ dotenv.config();
 import routes from './app';
 
 import {
-    runFunctionsInOrder
+    runInitialFetchingData, 
+    runFunctionsInOrder, 
 } from './order.sync.manager';
 
+runInitialFetchingData()
 runFunctionsInOrder()
 
 const app = express();
