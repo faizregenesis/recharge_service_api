@@ -1,6 +1,9 @@
 import amqp from 'amqplib';
 import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
+import {
+    sendDisclaimerToPods
+} from './publish.to..queue';
 
 dotenv.config();
 const prisma = new PrismaClient();
@@ -28,6 +31,8 @@ const syncDisclaimerData = async () => {
                     // console.log("Received disclaimer data Message:", JSON.stringify(data, null, 2));
 
                     const { accepted, questions } = data;
+
+                    sendDisclaimerToPods(data)
 
                     await prisma.terms_and_conditions_accepted.upsert({
                         where: { id: accepted.id },
