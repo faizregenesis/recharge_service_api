@@ -13,7 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(routes); 
 
-const port = 8080;
+const port = 3000;
 const host = `${process.env.HOST}`;
 
 app.listen(port, host, () => {
