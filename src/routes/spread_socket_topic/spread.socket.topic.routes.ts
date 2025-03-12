@@ -1,7 +1,8 @@
 import express from 'express';
 import {
     socketTopic, 
-    podTopic
+    podTopic, 
+    templateProperties
 } from './spread.socket.topic.controller';
 
 class socketTopicRoutes {
@@ -9,6 +10,7 @@ class socketTopicRoutes {
     constructor() {
         this.router.get('/socket/topic', socketTopic);
         this.router.get('/pod/topic', podTopic);
+        this.router.get('/template/properties', templateProperties);
     }
 }
 
