@@ -142,6 +142,7 @@ model terms_and_conditions_questions {
   update_date                  DateTime                       @default(now()) @db.Timestamptz(6)
   deleted_at                   DateTime?                      @db.Timestamp(6)
   terms_and_conditions_answers terms_and_conditions_answers[]
+  matrix_user                  matrix_user[]
 
   @@index([id, active], map: "terms_and_conditions_questions_idx")
 }
@@ -248,4 +249,30 @@ model template_properties {
   created_at  DateTime  @default(now()) @db.Timestamptz(6)
   updated_at  DateTime  @default(now()) @db.Timestamptz(6)
   deleted_at  DateTime? @db.Timestamptz(6)
+}
+
+model matrix_user {
+  id                              String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  fk_question_id                  Int                            @unique @db.SmallInt
+
+  stroboscopic_light              Int                            @db.SmallInt
+  audio_surround_sound            Int                            @db.SmallInt
+  vibro_acoustics                 Int                            @db.SmallInt
+  led_intensity                   Int                            @db.SmallInt
+  led_color                       Int                            @db.SmallInt
+  infra_red_nea_ir                Int                            @db.SmallInt
+  infra_red_far_ir                Int                            @db.SmallInt
+  pemf_therapy                    Boolean
+  olfactory_engagement            Boolean
+  binaural_beats_isochronic_tones Boolean
+  direct_neutral_stimulation      Boolean
+  duration                        Decimal?                        @db.Decimal(5, 2)
+  song                            String?
+  video                           String?
+  terms_and_conditions_questions  terms_and_conditions_questions @relation(fields: [fk_question_id], references: [id])
+
+  created_at                      DateTime                       @default(now()) @db.Timestamptz(6)
+  updated_at                      DateTime                       @default(now()) @db.Timestamptz(6)
+  deleted_at                      DateTime?                      @db.Timestamptz(6)
 }

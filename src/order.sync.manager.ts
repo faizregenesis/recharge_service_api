@@ -10,6 +10,7 @@ import {
 
 import {
     consumeUpdateQuestionMatrix, 
+    consumeInsertQuestionMatrix
 } from './routes/consume_matrix/consumer.matrix';
 
 const runFunctionsInOrder = async () => {
@@ -19,6 +20,7 @@ const runFunctionsInOrder = async () => {
         await consumeResetPassword()
         await syncDisclaimerData()
         await consumeUpdateQuestionMatrix(), 
+        await consumeInsertQuestionMatrix(), 
 
         console.log('All functions executed successfully in order');
     } catch (error) {

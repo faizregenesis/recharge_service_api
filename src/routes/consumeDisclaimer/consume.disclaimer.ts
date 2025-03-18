@@ -32,7 +32,7 @@ const syncDisclaimerData = async () => {
 
                     const { accepted, questions } = data;
 
-                    sendDisclaimerToPods(data)
+                    await sendDisclaimerToPods(data)
 
                     await prisma.terms_and_conditions_accepted.upsert({
                         where: { id: accepted.id },
