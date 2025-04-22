@@ -19,7 +19,7 @@ const consumeInsertQuestionMatrix = async () => {
         await channel.bindQueue(queue, insertQuestionMatrixExchange, '');
         channel.prefetch(1);
 
-        console.log(`\x1b[32mPod is waiting for messages on queue (sync insert matrix): ${queue}\x1b[0m`);
+        console.log(`\x1b[32mService is waiting for messages on queue (sync insert matrix): ${queue}\x1b[0m`);
 
         channel.consume(queue, async (msg) => {
             if (msg) {
@@ -93,7 +93,7 @@ const consumeUpdateQuestionMatrix = async () => {
         await channel.bindQueue(queue, updateQuestionMatrixExchange, '');
         channel.prefetch(1);
 
-        console.log(`\x1b[32mPod is waiting for messages on queue (sync update matrix): ${queue}\x1b[0m`);
+        console.log(`\x1b[32mService is waiting for messages on queue (sync update matrix): ${queue}\x1b[0m`);
 
         channel.consume(queue, async (msg) => {
             if (msg) {
