@@ -197,7 +197,6 @@ model socket_topics {
   @@index([id], map: "socket_topic_idx")
 }
 
-
 model pod_topics {
   id                      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   module_name             String?
@@ -275,4 +274,260 @@ model matrix_user {
   created_at                      DateTime                       @default(now()) @db.Timestamptz(6)
   updated_at                      DateTime                       @default(now()) @db.Timestamptz(6)
   deleted_at                      DateTime?                      @db.Timestamptz(6)
+}
+
+model pod {
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  fk_firmware_version   String?                @db.Uuid
+  fk_group_id           String?                @db.Uuid
+  fk_app_version        String?                @db.Uuid
+  fk_customer           String?                @db.Uuid
+
+  code                  String?
+  name                  String?
+  url                   String?
+  identification        String?
+  ip_address            String?
+
+  latitude              String?
+  longitude             String?
+  pod_version           String?
+  server_version        String?
+  mac_address_bluetooth String?            @unique 
+  mac_address_pod       String?            @unique 
+  soundcard_name        String?
+  amplifier             String?
+  start_deploy          DateTime? 
+  serial_number         String?
+
+  // task                  task[]
+  experiences2           experiences2[]
+  // pod_history           pod_history[]
+  // pod_logs              pod_logs[]
+  // template_properties   template_properties[]
+  self_development2      self_development2[]
+
+  customer              customer?              @relation(fields: [fk_customer], references: [id])
+  app_version           app_version?           @relation(fields: [fk_app_version], references: [id])
+  firmware_version      firmware_version?      @relation(fields: [fk_firmware_version], references: [id])
+  group                 group?                 @relation(fields: [fk_group_id], references: [id])
+
+  created_date        DateTime              @default(now()) @db.Timestamptz(6)
+  update_date         DateTime              @default(now()) @db.Timestamptz(6)
+  deleted_at          DateTime?             @db.Timestamp(6)
+  @@index([id], map: "pod_idx")
+}
+
+model experiences2 {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  mode_id                String?                  @db.Uuid
+  pod_id                 String?                  @db.Uuid
+
+  link_class             String
+  icon_class             String
+  icon_name              String
+  menu_name              String
+  information            String?
+  active                 Boolean                  @default(true)
+
+  detail_experience2     detail_experience2[]
+
+  pod                    pod?                     @relation(fields: [pod_id], references: [id])
+
+  created_date           DateTime                 @default(now()) @db.Timestamptz(6)
+  update_date            DateTime                 @default(now()) @db.Timestamptz(6)
+  deleted_at             DateTime?                @db.Timestamp(6)
+}
+
+model detail_experience2 {
+  id                              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stroboscopic_light              Int          @db.SmallInt
+  audio_surround_sound            Int          @db.SmallInt
+  vibro_acoustics                 Int          @db.SmallInt
+  led_intensity                   Int          @db.SmallInt
+  led_color                       Int          @db.SmallInt
+  infra_red_nea_ir                Int          @db.SmallInt
+  infra_red_far_ir                Int          @db.SmallInt
+  pemf_therapy                    Boolean
+  olfactory_engagement            Boolean
+  binaural_beats_isochronic_tones Boolean
+  direct_neutral_stimulation      Boolean
+  duration                        Decimal      @db.Decimal(5, 2)
+  experience_id                   String       @db.Uuid
+  song                            String?
+  video                           String?
+  lamp                            String?
+  sound_scape                     Int
+  scent                           String?
+  burst_time                      burst_time[]
+  experiences2                    experiences2  @relation(fields: [experience_id], references: [id])
+
+  created_at                      DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at                      DateTime     @default(now()) @db.Timestamptz(6)
+  deleted_at                      DateTime?    @db.Timestamptz(6)
+}
+
+model burst_time {
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  start_time           String
+  duration             String
+  fk_detail_experience String?            @db.Uuid
+
+  detail_experience2    detail_experience2? @relation(fields: [fk_detail_experience], references: [id])
+
+  created_at           DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at           DateTime?          @db.Timestamptz(6)
+}
+
+enum firmware_version_status {
+  active
+  nonactive
+}
+
+model firmware_version {
+  id                        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firmware_id               String?
+  light_version             String? 
+  chair_version             String? 
+  olvactory_version         String? 
+  manual_controll_version   String? 
+  air_condition_version     String? 
+  volume_controll_version   String? 
+  door_version              String? 
+  firmware_version_status   firmware_version_status @default(active)
+  pod pod[]
+
+  created_date          DateTime           @default(now()) @db.Timestamptz(6)
+  update_date           DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at            DateTime?          @db.Timestamp(6)
+}
+
+model group {
+  id                    String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  group_name            String?            @unique
+  pod pod[]
+
+  
+  created_date          DateTime           @default(now()) @db.Timestamptz(6)
+  update_date           DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at            DateTime?          @db.Timestamp(6)
+}
+
+model customer {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  address        String?
+  description    String?
+  phone          String?  @db.VarChar(15)
+
+  pod pod[]
+
+  created_date          DateTime           @default(now()) @db.Timestamptz(6)
+  update_date           DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at            DateTime?          @db.Timestamp(6)
+}
+
+enum app_version_status {
+  active
+  nonactive
+}
+
+model app_version {
+  description        String
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  notes              String?
+  version            String                 @unique
+  pub_date           DateTime?
+
+  app_version_status app_version_status         @default(active)
+  pods               pod[]
+
+  fk_version_big_screen    String      @db.Uuid
+  fk_version_small_screen  String      @db.Uuid
+  fk_version_mobile_api    String      @db.Uuid
+
+  version_big_screen        version_big_screen @relation(fields: [fk_version_big_screen], references: [id])
+  version_small_screen      version_small_screen @relation(fields: [fk_version_small_screen], references: [id])
+  version_mobile_api        version_mobile_api @relation(fields: [fk_version_mobile_api], references: [id])
+
+  created_date       DateTime               @default(now()) @db.Timestamptz(6)
+  update_date        DateTime               @default(now()) @db.Timestamptz(6)
+  deleted_at         DateTime?              @db.Timestamp(6)
+}
+
+model version_small_screen {
+  id                   String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  file                 String
+  date_realese         DateTime    @default(now())
+  signature            String?
+  small_screen_version String?
+
+  app_version        app_version[]
+
+  created_date         DateTime    @default(now()) @db.Timestamptz(6)
+  update_date          DateTime    @default(now()) @db.Timestamptz(6)
+  deleted_at           DateTime?   @db.Timestamp(6)
+}
+
+model version_big_screen {
+  id                 String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  file               String
+  date_realese       DateTime?
+  signature          String?
+  big_screen_version String?
+
+  app_version        app_version[]
+
+  created_date       DateTime    @default(now()) @db.Timestamptz(6)
+  update_date        DateTime    @default(now()) @db.Timestamptz(6)
+  deleted_at         DateTime?   @db.Timestamp(6)
+}
+
+model version_mobile_api {
+  id                 String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  file               String
+  date_realese       DateTime    @default(now())
+  signature          String?
+  mobile_api_version String?
+
+  app_version        app_version[]
+
+  created_date       DateTime    @default(now()) @db.Timestamptz(6)
+  update_date        DateTime    @default(now()) @db.Timestamptz(6)
+  deleted_at         DateTime?   @db.Timestamp(6)
+}
+
+model self_development2 {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  self_development_name String?
+  description           String?
+  icon                  String?
+  fk_pod_id             String?        @db.Uuid
+
+  pod                   pod?           @relation(fields: [fk_pod_id], references: [id])
+  sounds                self_development_sound2[]
+
+  created_date          DateTime? @db.Timestamptz(6)
+  updated_date          DateTime? @db.Timestamptz(6)
+  deleted_at            DateTime? @db.Timestamp(6)
+}
+
+model self_development_sound2 {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  self_development_id String?   @db.Uuid
+  sound_code          Int?
+  duration            String?
+  description         String?
+  sound_path          String?
+  file_path           String?
+  title               String?
+  caption             String?
+
+  self_development2    self_development2? @relation(fields: [self_development_id], references: [id])
+
+  deleted_at          DateTime? @db.Timestamp(6)
+  created_date        DateTime? @db.Timestamptz(6)
+  updated_date        DateTime? @db.Timestamptz(6)
 }

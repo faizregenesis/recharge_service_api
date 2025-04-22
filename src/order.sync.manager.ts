@@ -13,6 +13,32 @@ import {
     consumeInsertQuestionMatrix
 } from './routes/consume_matrix/consumer.matrix';
 
+import {
+    fetchInitialGroupeData, 
+    consumeGroupData
+} from './routes/consume_group/consumer.group'
+
+import {
+    fetchInitialVersionData,
+    consumeVersionData
+} from './routes/consume_version/consumer.version'
+
+
+import {
+    fetchInitialPodData,
+} from './routes/consume.pod/consumer.pod'
+
+
+const runFetchFunctionsInOrder = async () => {
+    console.log("🔄 Starting data synchronization...");
+
+    await fetchInitialVersionData()
+    await fetchInitialGroupeData()
+    await fetchInitialPodData()
+
+    console.log("🎉 All Starting data synchronization executed successfully in order.");
+};
+
 const runFunctionsInOrder = async () => {
     try {
         await consumeUserData()
@@ -30,4 +56,5 @@ const runFunctionsInOrder = async () => {
 
 export {
     runFunctionsInOrder, 
+    runFetchFunctionsInOrder
 }
