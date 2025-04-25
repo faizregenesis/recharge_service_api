@@ -361,6 +361,7 @@ model detail_experience2 {
   lamp                            String?
   sound_scape                     Int
   scent                           String?
+
   burst_time                      burst_time[]
   experiences2                    experiences2  @relation(fields: [experience_id], references: [id])
 

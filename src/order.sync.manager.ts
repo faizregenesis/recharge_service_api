@@ -23,11 +23,14 @@ import {
     consumeVersionData
 } from './routes/consume_version/consumer.version'
 
-
 import {
     fetchInitialPodData,
 } from './routes/consume.pod/consumer.pod'
 
+import {
+    consumePodSetting, 
+    consumeUpdatePodSetting
+} from './routes/consume_pod_settimg/consumer.pod.setting'
 
 const runFetchFunctionsInOrder = async () => {
     console.log("🔄 Starting data synchronization...");
@@ -41,12 +44,15 @@ const runFetchFunctionsInOrder = async () => {
 
 const runFunctionsInOrder = async () => {
     try {
-        await consumeUserData()
-        await consumeUsersDataUpdate()
-        await consumeResetPassword()
-        await syncDisclaimerData()
-        await consumeUpdateQuestionMatrix(), 
-        await consumeInsertQuestionMatrix(), 
+        // await consumeUserData()
+        // await consumeUsersDataUpdate()
+        // await consumeResetPassword()
+        // await syncDisclaimerData()
+        // await consumeUpdateQuestionMatrix()
+        // await consumeInsertQuestionMatrix() 
+        // await consumeGroupData()
+        await consumePodSetting()
+        await consumeUpdatePodSetting()
 
         console.log('All functions executed successfully in order');
     } catch (error) {
