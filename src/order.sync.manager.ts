@@ -44,13 +44,13 @@ const runFetchFunctionsInOrder = async () => {
 
 const runFunctionsInOrder = async () => {
     try {
-        // await consumeUserData()
-        // await consumeUsersDataUpdate()
-        // await consumeResetPassword()
-        // await syncDisclaimerData()
-        // await consumeUpdateQuestionMatrix()
-        // await consumeInsertQuestionMatrix() 
-        // await consumeGroupData()
+        await consumeUserData()
+        await consumeUsersDataUpdate()
+        await consumeResetPassword()
+        await syncDisclaimerData()
+        await consumeUpdateQuestionMatrix()
+        await consumeInsertQuestionMatrix() 
+        await consumeGroupData()
         await consumePodSetting()
         await consumeUpdatePodSetting()
 
