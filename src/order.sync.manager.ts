@@ -29,6 +29,7 @@ import {
 
 import {
     consumePodSetting, 
+    consumeUpdatePodSettingGroup,
     consumeUpdatePodSetting
 } from './routes/consume_pod_settimg/consumer.pod.setting'
 
@@ -52,6 +53,7 @@ const runFunctionsInOrder = async () => {
         await consumeInsertQuestionMatrix() 
         await consumeGroupData()
         await consumePodSetting()
+        await consumeUpdatePodSettingGroup()
         await consumeUpdatePodSetting()
 
         console.log('All functions executed successfully in order');

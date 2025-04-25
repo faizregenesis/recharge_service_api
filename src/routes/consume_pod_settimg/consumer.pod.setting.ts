@@ -7,11 +7,12 @@ import {
     sendUpdatePodSettingByGroup
 } from './publish.to..queue';
 
-
 dotenv.config(); 
 
 const createExchangeName  = process.env.CREATE_POD_SETTING_EXCHANGE;
 const updateExchangeName  = process.env.UPDATE_POD_SETTING_EXCHANGE;
+const createPodSettingByGroupSendExchange  = process.env.CREATE_POD_SETTING_BY_GROUP_SEND_EXCHANGE;
+const updatePodSettingByGroupSendExchange  = process.env.UPDATE_POD_SETTING_BY_GROUP_SEND_EXCHANGE;
 const connectionUrl = process.env.RABBITMQ_URL;
 
 const consumePodSetting = async () => {
@@ -185,18 +186,18 @@ const consumePodSetting = async () => {
     }
 };
 
-const consumeUpdatePodSetting = async () => {
+const consumeUpdatePodSettingGroup = async () => {
     try {
         const connection = await amqp.connect(`${connectionUrl}`);
         const channel = await connection.createChannel();
 
-        await channel.assertExchange(`${updateExchangeName}`, 'fanout', { durable: true });
+        await channel.assertExchange(`${updatePodSettingByGroupSendExchange}`, 'fanout', { durable: true });
 
         const { queue } = await channel.assertQueue('', { exclusive: true });
-        await channel.bindQueue(queue, `${updateExchangeName}`, '');
+        await channel.bindQueue(queue, `${updatePodSettingByGroupSendExchange}`, '');
         channel.prefetch(1);
 
-        console.log(`\x1b[32mService is waiting for messages on queue (sync update pod setting data): ${queue}\x1b[0m`);
+        console.log(`\x1b[32mService is waiting for messages on queue (sync update pod setting data by group): ${queue}\x1b[0m`);
 
         channel.consume(queue, async (msg) => {
             if (!msg) return;
@@ -279,6 +280,38 @@ const consumeUpdatePodSetting = async () => {
                     }
                 });
 
+                // const burstTime = data.detail_experience[0].burst_time
+
+                // console.log("ini adalah data burst time: ", burstTime);
+
+                if (Array.isArray(detailExpId)) {
+                    const templateDetail = detail_experience[0];
+                
+                    for (let i = 0; i < detailExpId.length; i++) {
+                        const detailId = detailExpId[i];
+                        const burst_time_list = templateDetail.burst_time || [];
+                
+                        await prisma.burst_time.deleteMany({
+                            where: { fk_detail_experience: detailId }
+                        });
+                
+                        for (const burst of burst_time_list) {
+                            if (!burst.start_time || !burst.duration) continue;
+                
+                            await prisma.burst_time.create({
+                                data: {
+                                    start_time: burst.start_time,
+                                    duration: burst.duration,
+                                    fk_detail_experience: detailId,
+                                    updated_at: new Date(),
+                                },
+                            });
+                
+                            console.log(`✅ Created burst_time [${burst.start_time}s - ${burst.duration}s] for detail_id: ${detailId}`);
+                        }
+                    }
+                }
+
                 const message = {
                     detail_experience: data.detail_experience,
                     experienceLinkClass: data.experienceLinkClass, 
@@ -287,9 +320,112 @@ const consumeUpdatePodSetting = async () => {
 
                 console.log("ini adalah message yang akan dikirim ke admin dan ke pod: ", message);
 
+                // TODO 3: pantulkan data ke admin, baru setelah itu di sebar ke semua pod yang sesuai
                 await sendUpdatePodSettingByGroup(message)
 
-                // TODO: pantulkan data ke admin, baru setelah itu di sebar ke semua pod yang sesuai
+                channel.ack(msg);
+            } catch (error: any) {
+                console.error('\x1b[31m❌ Error processing message:\x1b[0m', error.message);
+                channel.nack(msg, false, true);
+            }
+        });
+    } catch (error) {
+        console.error('\x1b[31m❌ Error initializing consumer:\x1b[0m', error);
+    }
+};
+
+const consumeUpdatePodSetting = async () => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(`${updateExchangeName}`, 'fanout', { durable: true });
+
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, `${updateExchangeName}`, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mService is waiting for messages on queue (sync update pod setting data): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (!msg) return;
+
+            try {
+                const messageContent = msg.content.toString();
+                const data = JSON.parse(messageContent);
+
+                console.log("ini adalah data yang didapatkan dari admin: ", data);
+
+                const { experience_id, detail_experience } = data;
+                if (!experience_id || !Array.isArray(detail_experience)) {
+                    console.error("\x1b[31m⚠️ Invalid message format:\x1b[0m", data);
+                    throw new Error("Invalid message format");
+                }
+
+                for (const detail of detail_experience) {
+                    const { id: detailId, burst_time, ...restDetail } = detail;
+
+                    const updatedDetail = detailId
+                    ? await prisma.detail_experience2.update({
+                        where: { id: detailId },
+                        data: {
+                            ...restDetail,
+                            updated_at: new Date(),
+                        },
+                        select: { id: true }
+                    })
+                    : await prisma.detail_experience2.create({
+                        data: {
+                            experience_id: experience_id,
+                            ...restDetail,
+                        },
+                        select: { id: true }
+                    });
+
+                    console.log(`✅ Detail Experience ID ${updatedDetail.id} saved successfully`);
+
+                    if (Array.isArray(burst_time)) {
+                        const burstData = burst_time.map(({ id, start_time, duration }) => ({
+                            id: id || undefined,
+                            fk_detail_experience: detailId,
+                            start_time,
+                            duration
+                        }));
+
+                        for (const burst of burstData) {
+                            const existBurstTimeData = await prisma.burst_time.findMany({
+                                where: {
+                                    id: burst.id
+                                }
+                            })
+                            if (existBurstTimeData.length === 0) {
+                                const createBurst = await prisma.burst_time.createMany({
+                                    data : {
+                                        id: burst.id, 
+                                        start_time           : burst.start_time,
+                                        duration             : burst.duration,
+                                        fk_detail_experience : detailId,
+                                        updated_at           : new Date()
+                                    }
+                                });
+                                console.log("burst time created", createBurst);
+                            } else {
+                                const updateBurst = await prisma.burst_time.updateMany({
+                                    where: { id: burst.id },
+                                    data : {
+                                        
+                                        start_time           : burst.start_time,
+                                        duration             : burst.duration,
+                                        fk_detail_experience : detailId,
+                                        updated_at           : new Date()
+                                    }
+                                });
+                                console.log("burst time updated", updateBurst);
+                            }
+                        }
+                    }
+
+                }
 
                 channel.ack(msg);
             } catch (error: any) {
@@ -304,5 +440,6 @@ const consumeUpdatePodSetting = async () => {
 
 export {
     consumePodSetting, 
+    consumeUpdatePodSettingGroup,
     consumeUpdatePodSetting
 }

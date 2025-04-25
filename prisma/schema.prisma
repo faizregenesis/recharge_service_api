@@ -31,23 +31,25 @@ model experiences {
 }
 
 model detail_experience {
-  id                              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  stroboscopic_light              Int         @db.SmallInt
-  audio_surround_sound            Int         @db.SmallInt
-  vibro_acoustics                 Int         @db.SmallInt
-  led_intensity                   Int         @db.SmallInt
-  led_color                       Int         @db.SmallInt
-  infra_red_nea_ir                Int         @db.SmallInt
-  infra_red_far_ir                Int         @db.SmallInt
-  pemf_therapy                    Boolean
-  olfactory_engagement            Boolean
-  binaural_beats_isochronic_tones Boolean
-  direct_neutral_stimulation      Boolean
-  duration                        Decimal     @db.Decimal(5, 2)
+  id                              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stroboscopic_light              Int?         @db.SmallInt
+  audio_surround_sound            Int?         @db.SmallInt
+  vibro_acoustics                 Int?         @db.SmallInt
+  led_intensity                   Int?         @db.SmallInt
+  led_color                       Int?         @db.SmallInt
+  infra_red_nea_ir                Int?         @db.SmallInt
+  infra_red_far_ir                Int?         @db.SmallInt
+  pemf_therapy                    Boolean?
+  olfactory_engagement            Boolean?
+  binaural_beats_isochronic_tones Boolean?
+  direct_neutral_stimulation      Boolean?
+  duration                        Decimal      @db.Decimal(5, 2)
   experience_id                   String?      @db.Uuid
   song                            String?
   video                           String?
-  sound_scape                     Int
+  lamp                            String?
+  sound_scape                     Int?
+  scent                           String?  
 
   created_at                      DateTime    @default(now()) @db.Timestamptz(6)
   updated_at                      DateTime    @default(now()) @db.Timestamptz(6)
