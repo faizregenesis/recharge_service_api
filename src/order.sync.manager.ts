@@ -28,8 +28,9 @@ import {
 } from './routes/consume.pod/consumer.pod'
 
 import {
-    consumePodSetting, 
+    consumeCreatePodSetting, 
     consumeUpdatePodSettingGroup,
+    consumeCreatePodSettingGroup,
     consumeUpdatePodSetting
 } from './routes/consume_pod_settimg/consumer.pod.setting'
 
@@ -45,16 +46,17 @@ const runFetchFunctionsInOrder = async () => {
 
 const runFunctionsInOrder = async () => {
     try {
-        await consumeUserData()
-        await consumeUsersDataUpdate()
-        await consumeResetPassword()
-        await syncDisclaimerData()
-        await consumeUpdateQuestionMatrix()
-        await consumeInsertQuestionMatrix() 
-        await consumeGroupData()
-        await consumePodSetting()
-        await consumeUpdatePodSettingGroup()
+        // await consumeUserData()
+        // await consumeUsersDataUpdate()
+        // await consumeResetPassword()
+        // await syncDisclaimerData()
+        // await consumeUpdateQuestionMatrix()
+        // await consumeInsertQuestionMatrix() 
+        // await consumeGroupData()
+        await consumeCreatePodSetting()
         await consumeUpdatePodSetting()
+        await consumeUpdatePodSettingGroup()
+        await consumeCreatePodSettingGroup()
 
         console.log('All functions executed successfully in order');
     } catch (error) {
