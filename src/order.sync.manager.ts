@@ -34,6 +34,11 @@ import {
     consumeUpdatePodSetting
 } from './routes/consume_pod_settimg/consumer.pod.setting'
 
+import {
+    consumeInsertSelfDevSoundData, 
+    consumeCreateSelfDevgGroup
+} from './routes/consume_self_dev/consumer.self.dev'
+
 const runFetchFunctionsInOrder = async () => {
     console.log("🔄 Starting data synchronization...");
 
@@ -57,6 +62,8 @@ const runFunctionsInOrder = async () => {
         await consumeUpdatePodSetting()
         await consumeUpdatePodSettingGroup()
         await consumeCreatePodSettingGroup()
+        await consumeInsertSelfDevSoundData()
+        await consumeCreateSelfDevgGroup()
 
         console.log('All functions executed successfully in order');
     } catch (error) {

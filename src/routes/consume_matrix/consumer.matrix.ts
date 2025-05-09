@@ -135,9 +135,17 @@ const consumeUpdateQuestionMatrix = async () => {
 
                     await prisma.$transaction([
                         ...termQuestions.map((q: any) =>
-                            prisma.terms_and_conditions_questions.update({
+                            prisma.terms_and_conditions_questions.upsert({
                                 where: { id: q.id },
-                                data: {
+                                update: {
+                                    question: q.question,
+                                    information: q.information,
+                                    active: q.active,
+                                    created_date: q.created_date,
+                                    update_date: q.update_date
+                                },
+                                create: {
+                                    id: q.id,
                                     question: q.question,
                                     information: q.information,
                                     active: q.active,
@@ -147,9 +155,25 @@ const consumeUpdateQuestionMatrix = async () => {
                             })
                         ),
                         ...matrixData.map((m: any) =>
-                            prisma.matrix_user.update({
-                                where: { id: m.id },
-                                data: {
+                            prisma.matrix_user.upsert({
+                                where: { fk_question_id: m.fk_question_id },
+                                update: {
+                                    stroboscopic_light: m.stroboscopic_light,
+                                    audio_surround_sound: m.audio_surround_sound,
+                                    vibro_acoustics: m.vibro_acoustics,
+                                    led_intensity: m.led_intensity,
+                                    led_color: m.led_color,
+                                    infra_red_nea_ir: m.infra_red_nea_ir,
+                                    infra_red_far_ir: m.infra_red_far_ir,
+                                    pemf_therapy: m.pemf_therapy,
+                                    olfactory_engagement: m.olfactory_engagement,
+                                    binaural_beats_isochronic_tones: m.binaural_beats_isochronic_tones,
+                                    direct_neutral_stimulation: m.direct_neutral_stimulation,
+                                    created_at: m.created_at,
+                                    updated_at: m.updated_at
+                                },
+                                create: {
+                                    id: m.id,
                                     fk_question_id: m.fk_question_id,
                                     stroboscopic_light: m.stroboscopic_light,
                                     audio_surround_sound: m.audio_surround_sound,
@@ -167,7 +191,7 @@ const consumeUpdateQuestionMatrix = async () => {
                                 }
                             })
                         )
-                    ]);
+                    ])
 
                     console.log("✅ Question & Matrix data successfully updated!");
 
@@ -178,8 +202,8 @@ const consumeUpdateQuestionMatrix = async () => {
                 }
             }
         });
-    } catch (error) {
-        console.error('\x1b[31mError initializing consumer:', error, '\x1b[0m');
+    } catch (error: any) {
+        console.error('\x1b[31mError initializing consumer:', error.message, '\x1b[0m');
     }
 };
 
