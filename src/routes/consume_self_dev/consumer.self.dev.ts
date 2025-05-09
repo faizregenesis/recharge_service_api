@@ -159,6 +159,7 @@ const consumeCreateSelfDevgGroup = async () => {
                     group_ids: data.group_ids, 
                     podIds: podIds, 
                     data0: formattingBounceMessage[0], 
+                    self_development_name: data.self_development_name
                 }
 
                 await bounceCreateSelfDevToAdmin(message)
