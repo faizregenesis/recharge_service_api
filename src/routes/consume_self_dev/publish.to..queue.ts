@@ -24,25 +24,25 @@ const bounceCreateSelfDevToAdmin = async (message: any) => {
     }
 };
 
-// const sendUpdatePodSettingByGroup = async (message: any) => {
-//     try {
-//         const connection = await amqp.connect(`${connectionUrl}`);
-//         const channel = await connection.createChannel();
+const bounceUpdateSelfDevToAdmin = async (message: any) => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
 
-//         await channel.assertExchange(updateByGroupExchangeName, 'fanout', { durable: true });
+        await channel.assertExchange(bounceUpdateSelfDevSound, 'fanout', { durable: true });
 
-//         const messageString = typeof message === 'string' ? message : JSON.stringify(message);
-//         channel.publish(updateByGroupExchangeName, '', Buffer.from(messageString));
-//         console.log(`Update Pod Setting sent to pods: ${message}`);
+        const messageString = typeof message === 'string' ? message : JSON.stringify(message);
+        channel.publish(bounceUpdateSelfDevSound, '', Buffer.from(messageString));
+        console.log(`Update Pod Setting sent to pods: ${message}`);
 
-//         await channel.close();
-//         await connection.close();
-//     } catch (error) {
-//         console.error('Failed to send data:', error);
-//     }
-// };
+        await channel.close();
+        await connection.close();
+    } catch (error) {
+        console.error('Failed to send data:', error);
+    }
+};
 
 export {
     bounceCreateSelfDevToAdmin, 
-    // sendUpdatePodSettingByGroup
+    bounceUpdateSelfDevToAdmin
 };

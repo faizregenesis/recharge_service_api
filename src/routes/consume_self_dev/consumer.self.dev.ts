@@ -175,7 +175,125 @@ const consumeCreateSelfDevgGroup = async () => {
     }
 };
 
+const consumeUpdateSelfDevgGroup = async () => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(`${updateSelfDevSoundGroupExchangeName}`, 'fanout', { durable: true });
+
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, `${updateSelfDevSoundGroupExchangeName}`, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mService is waiting for messages on queue (sync update self dev data by group): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (!msg) return;
+
+            try {
+                const messageContent = msg.content.toString();
+                const data = JSON.parse(messageContent);
+
+                // console.log("ini adalah data yang didapat dari admin: ", data);
+
+                // 1. dapatkan semua data pod yang sesuai dengan group terlebih dahulu
+                const podData = await prisma.pod.findMany({
+                    where: {
+                        fk_group_id: {
+                            in: data. group_ids
+                        }
+                    }
+                })
+                const podIds = podData.map(id => id.id)
+                // console.log("ini adalah data pod id yang sesuai dengan group: ", podIds);
+
+                // 2. dapatkan semua data self dev yang sesuai dengan pod
+                const selfDevData = await prisma.self_development2.findMany({
+                    where: {
+                        fk_pod_id: {
+                            in: podIds
+                        }, 
+                        self_development_name: data.self_development_name
+                    }
+                })
+                const selfDevId = selfDevData.map(idSelfDev => idSelfDev.id)
+                // console.log("ini adalah id self dev yang sesuai dengan group: ", selfDevId);
+
+                // 3. dapatkan semua data self dev sound yang akan diupdate
+                const selfDevSoundData = await prisma.self_development_sound2.findMany({
+                    where: {
+                        self_development_id: {
+                            in: selfDevId
+                        }
+                    }
+                })
+                const selfDevSoundId = selfDevSoundData.map(id => id.id)
+                // console.log("id self dev yang akan diupdate: ", selfDevSoundId);
+
+                // 4. simpan data ke dalam database:
+                const now = new Date();
+                const insertPromises = selfDevId.map(id => {
+                    return prisma.self_development_sound2.updateMany({
+                        where: {
+                            id: { in: selfDevSoundId }, 
+                            self_development_id: {in: selfDevId},
+                        },
+                            data: {
+                            sound_code: data.soundData.sound_code,
+                            title: data.soundData.title,
+                            duration: data.soundData.duration,
+                            description: data.soundData.description,
+                            sound_path: data.soundData.sound_path,
+                            file_path: data.soundData.file_path,
+                            caption: data.soundData.caption,
+                            created_date: now,
+                            updated_date: now
+                        }
+                    });
+                });
+
+                const updatedRecords = await prisma.self_development_sound2.findMany({
+                where: {
+                    self_development_id: { in: selfDevId },
+                },
+                });
+
+                const formattingBounceMessage = updatedRecords.map(sound => ({
+                    id: sound.id,
+                    self_development_id: sound.self_development_id,
+                    sound_code: sound.sound_code,
+                    title: sound.title,
+                    duration: sound.duration,
+                    description: sound.description,
+                    sound_path: sound.sound_path,
+                    file_path: sound.file_path,
+                }));
+
+                const message = {
+                    data: formattingBounceMessage, 
+                    group_ids: data.group_ids, 
+                    podIds: podIds, 
+                    data0: formattingBounceMessage[0], 
+                    self_development_name: data.self_development_name
+                }
+                console.log("ini adalah message yang akan dikirim ke pod dan juga ke admin: ", message);
+
+                // await bounceCreateSelfDevToAdmin(message)
+
+                channel.ack(msg);
+            } catch (error: any) {
+                console.error('\x1b[31m❌ Error processing message:\x1b[0m', error.message);
+                channel.nack(msg, false, true);
+            }
+        });
+    } catch (error) {
+        console.error('\x1b[31m❌ Error initializing consumer:\x1b[0m', error);
+    }
+};
+
 export {
     consumeCreateSelfDevgGroup, 
-    consumeInsertSelfDevSoundData
+    consumeInsertSelfDevSoundData, 
+    consumeUpdateSelfDevgGroup
 }

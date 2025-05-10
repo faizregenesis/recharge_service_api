@@ -36,7 +36,8 @@ import {
 
 import {
     consumeInsertSelfDevSoundData, 
-    consumeCreateSelfDevgGroup
+    consumeCreateSelfDevgGroup, 
+    consumeUpdateSelfDevgGroup
 } from './routes/consume_self_dev/consumer.self.dev'
 
 const runFetchFunctionsInOrder = async () => {
@@ -64,6 +65,7 @@ const runFunctionsInOrder = async () => {
         await consumeCreatePodSettingGroup()
         await consumeInsertSelfDevSoundData()
         await consumeCreateSelfDevgGroup()
+        await consumeUpdateSelfDevgGroup()
 
         console.log('All functions executed successfully in order');
     } catch (error) {
