@@ -2,7 +2,8 @@ import amqp from 'amqplib';
 import dotenv from  "dotenv"
 import prisma from '../../../prisma/prisma';
 import {
-    bounceCreateSelfDevToAdmin
+    bounceCreateSelfDevToAdmin, 
+    bounceUpdateSelfDevToAdmin
 } from './publish.to..queue';
 
 
@@ -279,7 +280,7 @@ const consumeUpdateSelfDevgGroup = async () => {
                 }
                 console.log("ini adalah message yang akan dikirim ke pod dan juga ke admin: ", message);
 
-                // await bounceCreateSelfDevToAdmin(message)
+                await bounceUpdateSelfDevToAdmin(message);
 
                 channel.ack(msg);
             } catch (error: any) {
