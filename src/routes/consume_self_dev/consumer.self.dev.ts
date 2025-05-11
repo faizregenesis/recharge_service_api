@@ -265,6 +265,7 @@ const consumeUpdateSelfDevgGroup = async () => {
                     description: sound.description,
                     sound_path: sound.sound_path,
                     file_path: sound.file_path,
+                    caption: sound.caption
                 }));
 
                 const message = {
