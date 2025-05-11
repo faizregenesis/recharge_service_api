@@ -232,32 +232,28 @@ const consumeUpdateSelfDevgGroup = async () => {
                 const selfDevSoundId = selfDevSoundData.map(id => id.id)
                 // console.log("id self dev yang akan diupdate: ", selfDevSoundId);
 
-                // 4. simpan data ke dalam database:
-                const now = new Date();
-                const insertPromises = selfDevId.map(id => {
-                    return prisma.self_development_sound2.updateMany({
-                        where: {
-                            id: { in: selfDevSoundId }, 
-                            self_development_id: {in: selfDevId},
-                        },
-                            data: {
-                            sound_code: data.soundData.sound_code,
-                            title: data.soundData.title,
-                            duration: data.soundData.duration,
-                            description: data.soundData.description,
-                            sound_path: data.soundData.sound_path,
-                            file_path: data.soundData.file_path,
-                            caption: data.soundData.caption,
-                            created_date: now,
-                            updated_date: now
-                        }
-                    });
+                const updatedDaata = await prisma.self_development_sound2.updateMany({
+                    where: {
+                        id: { in: selfDevSoundId }, 
+                        self_development_id: { in: selfDevId },
+                    },
+                    data: {
+                        sound_code: data.soundData.sound_code,
+                        title: data.soundData.title,
+                        duration: data.soundData.duration,
+                        description: data.soundData.description,
+                        sound_path: data.soundData.sound_path,
+                        file_path: data.soundData.file_path,
+                        caption: data.soundData.caption,
+                    },
                 });
 
+                // console.log("updatedData", updatedDaata);
+
                 const updatedRecords = await prisma.self_development_sound2.findMany({
-                where: {
-                    self_development_id: { in: selfDevId },
-                },
+                    where: {
+                        self_development_id: { in: selfDevId },
+                    },
                 });
 
                 const formattingBounceMessage = updatedRecords.map(sound => ({
