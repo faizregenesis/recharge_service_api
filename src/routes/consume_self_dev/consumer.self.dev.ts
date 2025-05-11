@@ -6,7 +6,6 @@ import {
     bounceUpdateSelfDevToAdmin
 } from './publish.to..queue';
 
-
 dotenv.config(); 
 
 const upsertSelfDevSoundDataExchange  = process.env.UPSERT_SELF_DEVELOPMENT_SOUND_EXCHANGE;
@@ -275,7 +274,7 @@ const consumeUpdateSelfDevgGroup = async () => {
                     data0: formattingBounceMessage[0], 
                     self_development_name: data.self_development_name
                 }
-                console.log("ini adalah message yang akan dikirim ke pod dan juga ke admin: ", message);
+                // console.log("ini adalah message yang akan dikirim ke pod dan juga ke admin: ", message);
 
                 await bounceUpdateSelfDevToAdmin(message);
 
