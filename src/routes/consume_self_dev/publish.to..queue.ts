@@ -15,7 +15,7 @@ const bounceCreateSelfDevToAdmin = async (message: any) => {
 
         const messageString = typeof message === 'string' ? message : JSON.stringify(message);
         channel.publish(bounceCreateSelfDevSound, '', Buffer.from(messageString));
-        console.log(`Self dev spread to pods and admin bounce: ${message}`);
+        console.log(`Create self dev spread to pods and admin bounce: ${message}`);
 
         await channel.close();
         await connection.close();
@@ -33,7 +33,7 @@ const bounceUpdateSelfDevToAdmin = async (message: any) => {
 
         const messageString = typeof message === 'string' ? message : JSON.stringify(message);
         channel.publish(bounceUpdateSelfDevSound, '', Buffer.from(messageString));
-        console.log(`Update Pod Setting sent to pods: ${message}`);
+        console.log(`Update self dev spread to pods and admin bounce: ${message}`);
 
         await channel.close();
         await connection.close();
