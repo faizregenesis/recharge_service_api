@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE "experiences2" ALTER COLUMN "link_class" DROP NOT NULL,
+ALTER COLUMN "icon_class" DROP NOT NULL,
+ALTER COLUMN "icon_name" DROP NOT NULL,
+ALTER COLUMN "menu_name" DROP NOT NULL,
+ALTER COLUMN "active" DROP NOT NULL,
+ALTER COLUMN "created_date" DROP NOT NULL,
+ALTER COLUMN "update_date" DROP NOT NULL;

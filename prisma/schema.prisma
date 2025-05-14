@@ -327,19 +327,19 @@ model experiences2 {
   mode_id                String?                  @db.Uuid
   pod_id                 String?                  @db.Uuid
 
-  link_class             String
-  icon_class             String
-  icon_name              String
-  menu_name              String
+  link_class             String?
+  icon_class             String?
+  icon_name              String?
+  menu_name              String?
   information            String?
-  active                 Boolean                  @default(true)
+  active                 Boolean?                 @default(true)
 
   detail_experience2     detail_experience2[]
 
   pod                    pod?                     @relation(fields: [pod_id], references: [id])
 
-  created_date           DateTime                 @default(now()) @db.Timestamptz(6)
-  update_date            DateTime                 @default(now()) @db.Timestamptz(6)
+  created_date           DateTime?                @default(now()) @db.Timestamptz(6)
+  update_date            DateTime?                @default(now()) @db.Timestamptz(6)
   deleted_at             DateTime?                @db.Timestamp(6)
 }
 
