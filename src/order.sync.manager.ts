@@ -41,7 +41,8 @@ import {
 } from './routes/consume_self_dev/consumer.self.dev'
 
 import {
-    consumeCreateExperiencesGroup
+    consumeCreateExperiencesGroup, 
+    consumeUpdateExperiencesGroup
 } from './routes/consume_experience/consumer.experiences'
 
 const runFetchFunctionsInOrder = async () => {
@@ -56,21 +57,22 @@ const runFetchFunctionsInOrder = async () => {
 
 const runFunctionsInOrder = async () => {
     try {
-        await consumeUserData()
-        await consumeUsersDataUpdate()
-        await consumeResetPassword()
-        await syncDisclaimerData()
-        await consumeUpdateQuestionMatrix()
-        await consumeInsertQuestionMatrix() 
-        await consumeGroupData()
-        await consumeCreatePodSetting()
-        await consumeUpdatePodSetting()
-        await consumeUpdatePodSettingGroup()
-        await consumeCreatePodSettingGroup()
-        await consumeInsertSelfDevSoundData()
-        await consumeCreateSelfDevgGroup()
-        await consumeUpdateSelfDevgGroup()
+        // await consumeUserData()
+        // await consumeUsersDataUpdate()
+        // await consumeResetPassword()
+        // await syncDisclaimerData()
+        // await consumeUpdateQuestionMatrix()
+        // await consumeInsertQuestionMatrix() 
+        // await consumeGroupData()
+        // await consumeCreatePodSetting()
+        // await consumeUpdatePodSetting()
+        // await consumeUpdatePodSettingGroup()
+        // await consumeCreatePodSettingGroup()
+        // await consumeInsertSelfDevSoundData()
+        // await consumeCreateSelfDevgGroup()
+        // await consumeUpdateSelfDevgGroup()
         await consumeCreateExperiencesGroup()
+        await consumeUpdateExperiencesGroup()
 
         console.log('All functions executed successfully in order');
     } catch (error) {

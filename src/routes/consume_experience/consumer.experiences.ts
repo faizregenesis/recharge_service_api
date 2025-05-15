@@ -47,6 +47,7 @@ const consumeCreateExperiencesGroup = async () => {
                 })
 
                 const podIdByGroup = findPodByGroup.map(id => id.id)
+                // console.log("jumlah data pod dengan group id yang match", podIdByGroup.length);
 
                 for (const podId of podIdByGroup) {
                     const insertData = {
@@ -57,6 +58,7 @@ const consumeCreateExperiencesGroup = async () => {
                         information: data.data.information,
                         active: data.data.active,
                         mode_id: data.data.mode_id,
+                        order_experience: data.data.order_experience, 
                         pod_id: podId
                     };
 
@@ -73,6 +75,11 @@ const consumeCreateExperiencesGroup = async () => {
                         link_class: data.data.link_class
                     }
                 })
+
+                const message = {
+                    pod_id: data.data.pod_id,
+                    findnewExperiencesData, 
+                }
 
                 await bounceCreateExperiences(findnewExperiencesData)
 
@@ -92,10 +99,10 @@ const consumeUpdateExperiencesGroup = async () => {
         const connection = await amqp.connect(`${connectionUrl}`);
         const channel = await connection.createChannel();
 
-        await channel.assertExchange(`${updateExperienceDataGroup}`, 'fanout', { durable: true });
+        await channel.assertExchange(updateExperienceDataGroup, 'fanout', { durable: true });
 
         const { queue } = await channel.assertQueue('', { exclusive: true });
-        await channel.bindQueue(queue, `${updateExperienceDataGroup}`, '');
+        await channel.bindQueue(queue, updateExperienceDataGroup, '');
         channel.prefetch(1);
 
         console.log(`\x1b[32mService is waiting for messages on queue (sync update experiences data): ${queue}\x1b[0m`);
@@ -104,51 +111,66 @@ const consumeUpdateExperiencesGroup = async () => {
             if (!msg) return;
 
             try {
-                const messageContent = msg.content.toString();
-                const data = JSON.parse(messageContent);
+                const data = JSON.parse(msg.content.toString());
+                const groupIds = data.group_ids;
 
-                console.log("ini adalah daya yang didapat dari admin: ", data);
+                // Ambil semua pod yang terkait dengan group_id yang dikirim
+                const pods = await prisma.pod.findMany({
+                    where: {
+                        fk_group_id: { in: groupIds }
+                    }
+                });
 
-                // const group_ids = data.group_ids
+                const podIds = pods.map(pod => pod.id);
+                console.log("pod_ids: ", podIds);
 
-                // const findPodByGroup = await prisma.pod.findMany({
-                //     where: {
-                //         fk_group_id: {
-                //             in: group_ids
-                //         }
-                //     }
-                // })
+                // Cari data experience di pod yang cocok dengan menu_name dan order_experience
+                const targetExperiences = await prisma.experiences2.findMany({
+                    where: {
+                        pod_id: { in: podIds },
+                        //menu_name: data.data.menu_name, //kuncinya ada pada menu name, tapi bagaimana jika menu name diupdate..? 
+                        order_experience: data.data.order_experience
+                    }
+                });
 
-                // const podIdByGroup = findPodByGroup.map(id => id.id)
-                // console.log("ini adalah pod id by group", podIdByGroup);
+                console.log("target experience to update: ", targetExperiences.length);
 
-                // for (const podId of podIdByGroup) {
-                //     const insertData = {
-                //         link_class: data.data.link_class,
-                //         icon_class: data.data.icon_class,
-                //         icon_name: data.data.icon_name,
-                //         menu_name: data.data.menu_name,
-                //         information: data.data.information,
-                //         active: data.data.active,
-                //         mode_id: data.data.mode_id,
-                //         pod_id: podId
-                //     };
+                for (const exp of targetExperiences) {
+                    const updateData = {
+                        link_class: data.data.link_class,
+                        icon_class: data.data.icon_class,
+                        icon_name: data.data.icon_name,
+                        menu_name: data.data.menu_name,
+                        information: data.data.information,
+                        active: data.data.active,
+                        mode_id: data.data.mode_id,
+                        order_experience: data.data.order_experience,
+                        update_date: new Date()
+                    };
 
-                //     await prisma.experiences2.createMany({
-                //         data: insertData
-                //     });
-                // }
+                    const updated = await prisma.experiences2.updateMany({
+                        where: {
+                            pod_id: { in: podIds },
+                            order_experience: updateData.order_experience
+                        },
+                        data: updateData
+                    });
 
-                // const findnewExperiencesData = await prisma.experiences2.findMany({
-                //     where: {
-                //         pod_id: {
-                //             in: podIdByGroup
-                //         }, 
-                //         link_class: data.data.link_class
-                //     }
-                // })
+                    // console.log("✅ Updated experience:", updated);
+                }
 
-                // await bounceUpdateExperiences(findnewExperiencesData)
+                const findUpdatedExperience = await prisma.experiences2.findMany({
+                    where: {
+                        pod_id: { in: podIds },
+                        menu_name: data.data.menu_name,
+                        order_experience: data.data.order_experience
+                    }
+                });
+
+                console.log("🟢 Final updated experiences:", findUpdatedExperience.length);
+
+                // Kirim kembali data yang sudah diupdate ke admin/pod lain jika dibutuhkan
+                await bounceUpdateExperiences(findUpdatedExperience);
 
                 channel.ack(msg);
             } catch (error: any) {

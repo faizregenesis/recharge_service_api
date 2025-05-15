@@ -337,6 +337,7 @@ model experiences2 {
   detail_experience2     detail_experience2[]
 
   pod                    pod?                     @relation(fields: [pod_id], references: [id])
+  order_experience       Int?
 
   created_date           DateTime?                @default(now()) @db.Timestamptz(6)
   update_date            DateTime?                @default(now()) @db.Timestamptz(6)
@@ -344,32 +345,39 @@ model experiences2 {
 }
 
 model detail_experience2 {
-  id                              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  stroboscopic_light              Int          @db.SmallInt
-  audio_surround_sound            Int          @db.SmallInt
-  vibro_acoustics                 Int          @db.SmallInt
-  led_intensity                   Int          @db.SmallInt
-  led_color                       Int          @db.SmallInt
-  infra_red_nea_ir                Int          @db.SmallInt
-  infra_red_far_ir                Int          @db.SmallInt
+  id                              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stroboscopic_light              Int         @db.SmallInt
+  audio_surround_sound            Int         @db.SmallInt
+  vibro_acoustics                 Int         @db.SmallInt
+  led_intensity                   Int         @db.SmallInt
+  led_color                       Int         @db.SmallInt
+  infra_red_nea_ir                Int         @db.SmallInt
+  infra_red_far_ir                Int         @db.SmallInt
   pemf_therapy                    Boolean
   olfactory_engagement            Boolean
   binaural_beats_isochronic_tones Boolean
   direct_neutral_stimulation      Boolean
-  duration                        Decimal      @db.Decimal(5, 2)
-  experience_id                   String       @db.Uuid
+  duration                        Decimal     @db.Decimal(5, 2)
+  experience_id                   String      @db.Uuid
   song                            String?
   video                           String?
   lamp                            String?
   sound_scape                     Int
-  scent                           String?
+  order                           Int?
+  order_experience                Int?
+  uva                             Int?
+  uvb                             Int?
+  uvc                             Int?
+  pemf_value                      Int?
 
+  scent                           String? 
   burst_time                      burst_time[]
-  experiences2                    experiences2  @relation(fields: [experience_id], references: [id])
 
-  created_at                      DateTime     @default(now()) @db.Timestamptz(6)
-  updated_at                      DateTime     @default(now()) @db.Timestamptz(6)
-  deleted_at                      DateTime?    @db.Timestamptz(6)
+  experiences                     experiences2 @relation(fields: [experience_id], references: [id])
+
+  created_at                      DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at                      DateTime    @default(now()) @db.Timestamptz(6)
+  deleted_at                      DateTime?   @db.Timestamptz(6)
 }
 
 model burst_time {
