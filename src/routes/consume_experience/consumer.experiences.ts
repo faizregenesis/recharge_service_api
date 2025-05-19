@@ -232,7 +232,7 @@ const consumeDeleteExperiencesGroup = async () => {
                 const expId = getMatchExpData.map(id => id.id) 
                 console.log("ini adalah match experience_id: ", expId);
 
-                    const deleteDetailExp2 = await prisma.detail_experience.deleteMany({
+                    const deleteDetailExp2 = await prisma.detail_experience2.deleteMany({
                     where: {
                         experience_id: {
                             in: expId
