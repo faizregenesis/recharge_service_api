@@ -42,7 +42,8 @@ import {
 
 import {
     consumeCreateExperiencesGroup, 
-    consumeUpdateExperiencesGroup
+    consumeUpdateExperiencesGroup, 
+    consumeDeleteExperiencesGroup
 } from './routes/consume_experience/consumer.experiences'
 
 const runFetchFunctionsInOrder = async () => {
@@ -57,22 +58,23 @@ const runFetchFunctionsInOrder = async () => {
 
 const runFunctionsInOrder = async () => {
     try {
-        await consumeUserData()
-        await consumeUsersDataUpdate()
-        await consumeResetPassword()
-        await syncDisclaimerData()
-        await consumeUpdateQuestionMatrix()
-        await consumeInsertQuestionMatrix() 
-        await consumeGroupData()
+        // await consumeUserData()
+        // await consumeUsersDataUpdate()
+        // await consumeResetPassword()
+        // await syncDisclaimerData()
+        // await consumeUpdateQuestionMatrix()
+        // await consumeInsertQuestionMatrix() 
+        // await consumeGroupData()
         await consumeCreatePodSetting()
         await consumeUpdatePodSetting()
-        await consumeUpdatePodSettingGroup()
-        await consumeCreatePodSettingGroup()
-        await consumeInsertSelfDevSoundData()
-        await consumeCreateSelfDevgGroup()
-        await consumeUpdateSelfDevgGroup()
+        // await consumeUpdatePodSettingGroup()
+        // await consumeCreatePodSettingGroup()
+        // await consumeInsertSelfDevSoundData()
+        // await consumeCreateSelfDevgGroup()
+        // await consumeUpdateSelfDevgGroup()
         await consumeCreateExperiencesGroup()
         await consumeUpdateExperiencesGroup()
+        await consumeDeleteExperiencesGroup()
 
         console.log('All functions executed successfully in order');
     } catch (error) {

@@ -166,9 +166,9 @@ const consumeCreatePodSetting = async () => {
                                 }
                             }
                         }
-
                     }
 
+                    channel.ack(msg);
                 } catch (error) {
                     console.error('\x1b[31mError processing message:', error, '\x1b[0m');
                     channel.nack(msg, false, true);

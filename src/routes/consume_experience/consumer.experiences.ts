@@ -3,7 +3,8 @@ import dotenv from  "dotenv"
 import prisma from '../../../prisma/prisma';
 import {
     bounceCreateExperiences, 
-    bounceUpdateExperiences
+    bounceUpdateExperiences, 
+    bounceDeleteExperiences
 } from './publish.to..queue';
 
 dotenv.config(); 
@@ -183,7 +184,83 @@ const consumeUpdateExperiencesGroup = async () => {
     }
 };
 
+const consumeDeleteExperiencesGroup = async () => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(`${deleteExperienceDataGroup}`, 'fanout', { durable: true });
+
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, `${deleteExperienceDataGroup}`, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mService is waiting for messages on queue (sync delete experiences data): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (!msg) return;
+
+            try {
+                const messageContent = msg.content.toString();
+                const data = JSON.parse(messageContent);
+
+                console.log("ini adalah data yang didapat dari admin: ", data);
+
+                const group_ids = data.group_ids
+                const order_experience = data.data.order_experience
+                console.log("ini adalah order experiemnce: ", order_experience);
+
+                const findPodByGroup = await prisma.pod.findMany({
+                    where: {
+                        fk_group_id: {
+                            in: group_ids
+                        }
+                    }
+                })
+
+                const podIdByGroup = findPodByGroup.map(id => id.id)
+                console.log("jumlah data pod dengan group id yang match", podIdByGroup);
+
+                const getMatchExpData = await prisma.experiences2.findMany({
+                    where: {
+                        pod_id: {
+                            in: podIdByGroup
+                        }, 
+                        order_experience: order_experience
+                    }
+                })
+                const expId = getMatchExpData.map(id => id.id) 
+                console.log("ini adalah match experience_id: ", expId);
+
+                const DeleteManyExp = await prisma.experiences2.deleteMany({
+                    where: {
+                        id: {
+                            in: expId
+                        }
+                    }
+                });
+                console.log("experience deleted", DeleteManyExp);
+
+                const message = {
+                    data: expId, 
+                    order_experience: order_experience
+                }
+
+                await bounceDeleteExperiences(message)
+
+                channel.ack(msg);
+            } catch (error: any) {
+                console.error('\x1b[31m❌ Error processing message:', error.message, '\x1b[0m');
+                channel.nack(msg, false, true);
+            }
+        });
+    } catch (error) {
+        console.error('\x1b[31m❌ Error initializing consumer:', error, '\x1b[0m');
+    }
+};
+
 export {
     consumeCreateExperiencesGroup, 
-    consumeUpdateExperiencesGroup
+    consumeUpdateExperiencesGroup, 
+    consumeDeleteExperiencesGroup
 }
