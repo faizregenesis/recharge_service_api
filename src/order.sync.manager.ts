@@ -25,6 +25,8 @@ import {
 
 import {
     fetchInitialPodData,
+    consumePodData,
+    consumeDeletePodData
 } from './routes/consume.pod/consumer.pod'
 
 import {
@@ -65,6 +67,8 @@ const runFetchFunctionsInOrder = async () => {
 const runFunctionsInOrder = async () => {
     try {
         await consumeUserData()
+        await consumePodData()
+        await consumeDeletePodData()
         await consumeUsersDataUpdate()
         await consumeResetPassword()
         await syncDisclaimerData()

@@ -9,6 +9,7 @@ import properties from './routes/properties/properties.routes';
 import detailExperience from './routes/detail_experience/detail.experience.routes';
 import selfDevData from './routes/self_development/self.development.routes';
 import socketTopicRoutes from './routes/spread_socket_topic/spread.socket.topic.routes';
+import deletePodUrgentOnly from './routes/podManagement/pod.routes';
 
 class App {
     public httpServer = express();
@@ -34,6 +35,7 @@ class App {
         this.httpServer.use('/service-api', properties);
         this.httpServer.use('/service-api', selfDevData);
         this.httpServer.use('/service-api', socketTopicRoutes);
+        this.httpServer.use('/service-api', deletePodUrgentOnly);
 
         this.httpServer.use((err: Error, req: Request, res: Response, next: NextFunction) => {
             console.log(`error in url ${req.originalUrl} - error: ${err}`);
