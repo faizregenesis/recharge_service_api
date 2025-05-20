@@ -511,23 +511,25 @@ model version_mobile_api {
 }
 
 model self_development2 {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                    String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   self_development_name String?
   description           String?
   icon                  String?
   fk_pod_id             String?        @db.Uuid
+  is_explore            Boolean?
 
   pod                   pod?           @relation(fields: [fk_pod_id], references: [id])
   sounds                self_development_sound2[]
 
-  created_date          DateTime? @db.Timestamptz(6)
-  updated_date          DateTime? @db.Timestamptz(6)
-  deleted_at            DateTime? @db.Timestamp(6)
+  created_date          DateTime?      @default(now()) @db.Timestamptz(6)
+  updated_date          DateTime?      @default(now()) @db.Timestamptz(6)
+  deleted_at            DateTime?      @db.Timestamp(6)
 }
 
 model self_development_sound2 {
-  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  self_development_id String?   @db.Uuid
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  self_development_id String?           @db.Uuid
+
   sound_code          Int?
   duration            String?
   description         String?
@@ -535,10 +537,11 @@ model self_development_sound2 {
   file_path           String?
   title               String?
   caption             String?
+  order               Int?
+  
+  self_development    self_development2?  @relation(fields: [self_development_id], references: [id])
 
-  self_development2    self_development2? @relation(fields: [self_development_id], references: [id])
-
-  deleted_at          DateTime? @db.Timestamp(6)
-  created_date        DateTime? @db.Timestamptz(6)
-  updated_date        DateTime? @db.Timestamptz(6)
+  created_date          DateTime?        @default(now()) @db.Timestamptz(6)
+  updated_date          DateTime?        @default(now()) @db.Timestamptz(6)
+  deleted_at            DateTime?        @db.Timestamp(6)
 }

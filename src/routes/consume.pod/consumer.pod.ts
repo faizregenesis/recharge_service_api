@@ -7,6 +7,7 @@ import axios from "axios";
 dotenv.config(); 
 
 const exchangeName  = `${process.env.POD_EXCHANGE_CREATE}`;
+const deletePodDataExchange = `${process.env.POD_EXCHANGE_DELETE}`;
 const connectionUrl = process.env.RABBITMQ_URL;
 const podUrl        = process.env.POD_URL;
 
@@ -338,6 +339,298 @@ const fetchInitialPodData = async () => {
     }
 };
 
+const consumePodData = async () => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(exchangeName, 'fanout', { durable: true });
+
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, exchangeName, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mService is waiting for messages on queue (create pod): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (msg) {
+                try {
+                    const messageContent = msg.content.toString();
+                    console.log("Received Message:", messageContent.length);
+                    
+                    const data = JSON.parse(messageContent);
+
+                    if (!data || typeof data !== 'object') {
+                        console.error('\x1b[31mInvalid data format.\x1b[0m');
+                        return channel.nack(msg, false, false);
+                    }
+
+                    // console.log('\x1b[32mProcessing data:\x1b[0m', JSON.stringify(data, null, 2));
+
+                    let firmwareVersion = await prisma.firmware_version.findUnique({
+                        where: { 
+                            id: data.fk_firmware_version 
+                        }
+                    });
+
+                    if (!firmwareVersion && data.firmware_data) {
+                        firmwareVersion = await prisma.firmware_version.upsert({
+                            where: {
+                                id: data.firmware_data.id
+                            },
+                            create: {
+                                id: data.fk_firmware_version,
+                                firmware_id: data.firmware_data.firmware_id,
+                                light_version: data.firmware_data.light_version,
+                                chair_version: data.firmware_data.chair_version,
+                                olvactory_version: data.firmware_data.olvactory_version,
+                                manual_controll_version: data.firmware_data.manual_controll_version,
+                                air_condition_version: data.firmware_data.air_condition_version,
+                                volume_controll_version: data.firmware_data.volume_controll_version,
+                                door_version: data.firmware_data.door_version
+                            }, 
+                            update: {
+                                firmware_id: data.firmware_data.firmware_id,
+                                light_version: data.firmware_data.light_version,
+                                chair_version: data.firmware_data.chair_version,
+                                olvactory_version: data.firmware_data.olvactory_version,
+                                manual_controll_version: data.firmware_data.manual_controll_version,
+                                air_condition_version: data.firmware_data.air_condition_version,
+                                volume_controll_version: data.firmware_data.volume_controll_version,
+                                door_version: data.firmware_data.door_version
+                            }
+                        });
+                    }
+
+                    let customer = await prisma.customer.findUnique({
+                        where: { id: data.fk_customer }
+                    });
+
+                    if (!customer && data.customer_data) {
+                        customer = await prisma.customer.create({
+                            data: {
+                                id: data.fk_customer,
+                                address: data.customer_data.address,
+                                description: data.customer_data.description,
+                                phone: data.customer_data.phone
+                            }
+                        });
+                    }
+
+                        await prisma.pod.upsert({
+                            where: {
+                                id: data.id
+                            }, 
+                            update: {
+                                fk_group_id: data.fk_group_id,
+                                fk_app_version: data.fk_app_version, 
+                                fk_firmware_version: firmwareVersion?.id, 
+                                fk_customer: customer?.id,
+                                code: data.code,    
+                                name: data.name, 
+                                url: data.url, 
+                                pod_version: data.pod_version,
+                                identification: data.identification, 
+                                ip_address: data.ip_address, 
+                                latitude: data.latitude, 
+                                longitude: data.longitude, 
+                                server_version: data.server_version, 
+                                mac_address_bluetooth: data.mac_address_bluetooth, 
+                                mac_address_pod: data.mac_address_pod, 
+                                soundcard_name: data.soundcard_name, 
+                                amplifier: data.amplifier, 
+                                start_deploy: data.start_deploy ? new Date(data.start_deploy) : null, 
+                                serial_number: data.serial_number
+                            },
+                            create: {
+                                id: data.id,
+                                fk_group_id: data.fk_group_id,
+                                fk_app_version: data.fk_app_version, 
+                                fk_firmware_version: firmwareVersion?.id, 
+                                fk_customer: customer?.id,
+                                code: data.code,    
+                                name: data.name, 
+                                url: data.url, 
+                                pod_version: data.pod_version,
+                                identification: data.identification, 
+                                ip_address: data.ip_address, 
+                                latitude: data.latitude, 
+                                longitude: data.longitude, 
+                                server_version: data.server_version, 
+                                mac_address_bluetooth: data.mac_address_bluetooth, 
+                                mac_address_pod: data.mac_address_pod, 
+                                soundcard_name: data.soundcard_name, 
+                                amplifier: data.amplifier, 
+                                start_deploy: data.start_deploy ? new Date(data.start_deploy) : null, 
+                                serial_number: data.serial_number
+                            } 
+                        });
+
+                    const experiences = data.experiences;
+                    for (const exp of experiences) {
+                        if (!exp.id) {
+                            console.warn('Skipping experience without ID:', exp);
+                            continue;
+                        }
+
+                        await prisma.experiences2.upsert({
+                            where: { id: exp.id },
+                            create: exp,
+                            update: exp
+                        });
+                    }
+
+                    const detailExperiences = data.detailExperiences;
+                    for (const detail of detailExperiences) {
+                        await prisma.detail_experience2.upsert({
+                            where: {
+                                id: detail.id,
+                            },
+                            update: {
+                                ...detail,
+                            },
+                            create: {
+                                ...detail,
+                            },
+                        });
+                    }
+
+                    await Promise.all(
+                    data.selfDevToPod.map((selfDev: any) =>
+                        prisma.self_development2.upsert({
+                        where: { id: selfDev.id },
+                        create: {
+                            id: selfDev.id,
+                            self_development_name: selfDev.self_development_name,
+                            description: selfDev.description,
+                            icon: selfDev.icon,
+                            is_explore: selfDev.is_explore,
+                            created_date: selfDev.created_date,
+                            updated_date: selfDev.updated_date,
+                            deleted_at: selfDev.deleted_at,
+                            pod: {
+                            connect: { id: selfDev.fk_pod_id }
+                            }
+                        },
+                        update: {
+                            self_development_name: selfDev.self_development_name,
+                            description: selfDev.description,
+                            icon: selfDev.icon,
+                            is_explore: selfDev.is_explore,
+                            updated_date: selfDev.updated_date,
+                            deleted_at: selfDev.deleted_at
+                        }
+                        })
+                    )
+                    );
+
+                    await Promise.all(
+                        data.selfDevSoundToPod.map((selfDevSound: any) =>
+                                prisma.self_development_sound2.upsert({
+                                where: { id: selfDevSound.id },
+                                create: selfDevSound,
+                                update: selfDevSound
+                            })
+                        )
+                    );
+
+                } catch (error) {
+                    console.error('\x1b[31mError processing message:', error, '\x1b[0m');
+                    channel.nack(msg, false, true);
+                }
+            }
+        });
+
+    } catch (error: any) {
+        console.error('\x1b[31mError initializing consumer:', error.message, '\x1b[0m');
+    }
+};
+
+const consumeDeletePodData = async () => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(deletePodDataExchange, 'fanout', { durable: true });
+
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, deletePodDataExchange, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mService is waiting for messages on queue (delete pod): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (msg) {
+                try {
+                    const messageContent = msg.content.toString();
+                    console.log("Received Message:", messageContent.length);
+
+                    const data = JSON.parse(messageContent);
+
+                    // console.log("ini adalah data yang didapat dari admin: ", data);
+
+                    const pod_id = data.pod_id
+                    const expId = data.expId
+                    const detailExpId = data.detailExpId
+                    const selfDevId = data.selfDevId
+                    const selfDevSoundId = data.selfDevSoundId
+
+                    // hapus detail exp
+                    const deleteDetail = await prisma.detail_experience2.deleteMany({
+                        where: {
+                            id: {in: detailExpId}, 
+                            experience_id: {in: expId}
+                        }
+                    })
+                    console.log("detail experience deleted: ", deleteDetail);
+
+                    // delete Experience data
+                    const deleteExperience = await prisma.experiences2.deleteMany({
+                        where: {
+                            id: {in: expId}
+                        }
+                    })
+                    console.log("experience deleted: ", deleteExperience);
+
+                    // delete selfDev sound 
+                    const deleteSelfDevSound = await prisma.self_development_sound2.deleteMany({
+                        where: {
+                            id: {
+                                in: selfDevSoundId
+                            }, 
+                            self_development_id: {
+                                in: selfDevId
+                            }
+                        }
+                    })
+                    console.log("self dev sound deleted: ", deleteSelfDevSound);
+
+                    const deleteSelfDevData = await prisma.self_development2.deleteMany({
+                        where: {id: {in: selfDevId}}
+                    })
+                    console.log("self dev data deleted: ", deleteSelfDevData);
+
+                    const deletePodData = await prisma.pod.delete({
+                        where: {
+                            id: pod_id
+                        }
+                    })
+                    console.log("pod deleted: ", deletePodData.id);
+
+                } catch (error) {
+                    console.error('\x1b[31mError processing message:', error, '\x1b[0m');
+                    channel.nack(msg, false, true);
+                }
+            }
+        });
+
+    } catch (error: any) {
+        console.error('\x1b[31mError initializing consumer:', error.message, '\x1b[0m');
+    }
+};
+
 export {
-    fetchInitialPodData, 
+    fetchInitialPodData,
+    consumePodData,
+    consumeDeletePodData
 }

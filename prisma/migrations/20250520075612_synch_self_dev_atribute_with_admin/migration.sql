@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE "self_development2" ADD COLUMN     "is_explore" BOOLEAN,
+ALTER COLUMN "created_date" SET DEFAULT CURRENT_TIMESTAMP,
+ALTER COLUMN "updated_date" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "self_development_sound2" ADD COLUMN     "order" INTEGER,
+ALTER COLUMN "created_date" SET DEFAULT CURRENT_TIMESTAMP,
+ALTER COLUMN "updated_date" SET DEFAULT CURRENT_TIMESTAMP;
