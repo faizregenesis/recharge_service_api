@@ -171,6 +171,12 @@ const consumeDeleteExperiencesData = async () => {
                     // console.log("pod yang dari admin: ", data.pod_id);
 
                     if (podLocalId.includes(data.pod_id)) {
+                        const deleteDetailExperience = await prisma.detail_experience2.deleteMany({
+                            where: {
+                                experience_id: data.id
+                            }
+                        })
+
                         const deleteExperience = await prisma.experiences2.delete({
                             where: {
                                 id: data.id, 
@@ -178,6 +184,7 @@ const consumeDeleteExperiencesData = async () => {
                             }
                         })
 
+                        console.log("detail exprience data deleted: ", deleteDetailExperience);
                         console.log("exprience data deleted: ", deleteExperience.id);
                     } else {
                         console.log("delete experience data is not for this pod");
