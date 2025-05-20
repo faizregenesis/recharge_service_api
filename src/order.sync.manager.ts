@@ -44,7 +44,13 @@ import {
     consumeCreateExperiencesGroup, 
     consumeUpdateExperiencesGroup, 
     consumeDeleteExperiencesGroup
-} from './routes/consume_experience/consumer.experiences'
+} from './routes/consume_experience_group/consumer.experiences'
+
+import {
+    consumeCreateExperiencesData,
+    consumeUpdateExperiencesData, 
+    consumeDeleteExperiencesData
+} from './routes/consume_experiences/consumer.experiences'
 
 const runFetchFunctionsInOrder = async () => {
     console.log("🔄 Starting data synchronization...");
@@ -75,6 +81,9 @@ const runFunctionsInOrder = async () => {
         await consumeCreateExperiencesGroup()
         await consumeUpdateExperiencesGroup()
         await consumeDeleteExperiencesGroup()
+        await consumeCreateExperiencesData()
+        await consumeUpdateExperiencesData()
+        await consumeDeleteExperiencesData()
 
         console.log('All functions executed successfully in order');
     } catch (error) {
