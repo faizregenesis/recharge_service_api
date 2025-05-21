@@ -5,6 +5,7 @@ dotenv.config();
 const connectionUrl = process.env.RABBITMQ_URL;
 const createByGroupExchangeName  = `${process.env.CREATE_POD_SETTING_BY_GROUP_EXCHANGE}`;
 const updateByGroupExchangeName  = `${process.env.UPDATE_POD_SETTING_BY_GROUP_EXCHANGE}`;
+const deleteByGroupExchangeName  = `${process.env.DELETE_POD_SETTING_BY_GROUP_EXCHANGE}`;
 
 const sendCreatePodSettingByGroup = async (message: any) => {
     try {
@@ -42,7 +43,26 @@ const sendUpdatePodSettingByGroup = async (message: any) => {
     }
 };
 
+const sendDeletePodSettingByGroup = async (message: any) => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(deleteByGroupExchangeName, 'fanout', { durable: true });
+
+        const messageString = typeof message === 'string' ? message : JSON.stringify(message);
+        channel.publish(deleteByGroupExchangeName, '', Buffer.from(messageString));
+        console.log(`Delete Pod Setting sent to pods and admin: ${message}`);
+
+        await channel.close();
+        await connection.close();
+    } catch (error) {
+        console.error('Failed to send data:', error);
+    }
+};
+
 export {
     sendCreatePodSettingByGroup, 
-    sendUpdatePodSettingByGroup
+    sendUpdatePodSettingByGroup, 
+    sendDeletePodSettingByGroup
 };

@@ -4,7 +4,8 @@ import prisma from '../../../prisma/prisma';
 
 import { 
     sendCreatePodSettingByGroup, 
-    sendUpdatePodSettingByGroup
+    sendUpdatePodSettingByGroup, 
+    sendDeletePodSettingByGroup
 } from './publish.to..queue';
 
 dotenv.config(); 
@@ -14,6 +15,7 @@ const updateExchangeName  = process.env.UPDATE_POD_SETTING_EXCHANGE;
 const deleteExchangeName  = process.env.DELETE_POD_SETTING_EXCHANGE;
 const createPodSettingByGroupSendExchange  = process.env.CREATE_POD_SETTING_BY_GROUP_SEND_EXCHANGE;
 const updatePodSettingByGroupSendExchange  = process.env.UPDATE_POD_SETTING_BY_GROUP_SEND_EXCHANGE;
+const deletePodSettingByGroupSendExchange  = `${process.env.DELETE_POD_SETTING_BY_GROUP_SEND_EXCHANGE}`;
 const connectionUrl = process.env.RABBITMQ_URL;
 
 const consumeCreatePodSetting = async () => {
@@ -319,7 +321,8 @@ const consumeUpdatePodSettingGroup = async () => {
                         scent: detail_experience[0].scent,
                         song: detail_experience[0].song,
                         lamp: detail_experience[0].lamp,
-                        video: detail_experience[0].video
+                        video: detail_experience[0].video, 
+                        order: detail_experience[0].order
                     }
                 });
 
@@ -628,10 +631,93 @@ const consumeUpdatePodSetting = async () => {
     }
 };
 
+const consumeDeleteDetailExpByGroup = async () => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(`${deletePodSettingByGroupSendExchange}`, 'fanout', { durable: true });
+
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, `${deletePodSettingByGroupSendExchange}`, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mService is waiting for messages on queue (sync delete pod setting data by group): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (msg) {
+                try {
+                    const messageContent = msg.content.toString();
+                    const data = JSON.parse(messageContent);
+
+                    // console.log("ini adalah data yang didapat dari admin: ", data);
+
+                    const detailId = data.detailId
+                    const order = data.order
+                    const order_experience = data.order_experience
+                    const group_ids = data.group_ids
+
+                    const getPodMatchData = await prisma.pod.findMany({
+                        where: {
+                            fk_group_id: {in: group_ids}
+                        }
+                    })
+                    const podIdsMatchGroup = getPodMatchData.map(id => id.id)
+                    // console.log("match pod id by group: ", podIdsMatchGroup);
+
+                    const getExpereinceMatch = await prisma.experiences2.findMany({
+                        where: {
+                            pod_id: {in: podIdsMatchGroup}
+                        }
+                    })
+                    const experienceIdMathc = getExpereinceMatch.map(id => id.id)
+                    // console.log("experience id match: ", experienceIdMathc);
+
+                    const detailExperienceId = await prisma.detail_experience2.findMany({
+                        where: {
+                            experience_id: {in: experienceIdMathc}
+                        }
+                    })
+                    const detailExpId = detailExperienceId.map(id => id.id) 
+                    console.log("data detail yang akan dihapus: ", detailExpId);
+
+                    const message = {
+                        pod_ids: podIdsMatchGroup, 
+                        experience_ids: experienceIdMathc,  
+                        detailExpId: detailExpId
+                    }
+                    console.log("ini adalah message yang akan dikirim: ", message);
+
+                    await sendDeletePodSettingByGroup(message)
+
+                    const deleteDetailExperience = await prisma.detail_experience2.deleteMany({
+                        where: {
+                            id: {in: detailExpId}, 
+                            // order: {in: order}, 
+                            // order_experience: {in: order_experience}
+                        }
+                    })
+
+                    console.log("detail Experience deleted by group", deleteDetailExperience);
+
+                    channel.ack(msg);
+                } catch (error) {
+                    console.error('\x1b[31mError processing message:', error, '\x1b[0m');
+                    channel.nack(msg, false, true);
+                }
+            }
+        });
+    } catch (error) {
+        console.error('\x1b[31mError initializing consumer:', error, '\x1b[0m');
+    }
+};
+
+
 export {
     consumeCreatePodSetting, 
     consumeUpdatePodSettingGroup,
     consumeCreatePodSettingGroup, 
+    consumeDeleteDetailExpByGroup,
     consumeUpdatePodSetting, 
     consumeDeletePodSetting
 }
