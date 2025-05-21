@@ -33,6 +33,7 @@ import {
     consumeCreatePodSetting, 
     consumeUpdatePodSettingGroup,
     consumeCreatePodSettingGroup,
+    consumeDeleteDetailExpByGroup,
     consumeUpdatePodSetting, 
     consumeDeletePodSetting
 } from './routes/consume_pod_settimg/consumer.pod.setting'
@@ -81,6 +82,7 @@ const runFunctionsInOrder = async () => {
         await consumeDeletePodSetting()
         await consumeUpdatePodSettingGroup()
         await consumeCreatePodSettingGroup()
+        await consumeDeleteDetailExpByGroup()
         await consumeInsertSelfDevSoundData()
         await consumeCreateSelfDevgGroup()
         await consumeUpdateSelfDevgGroup()
