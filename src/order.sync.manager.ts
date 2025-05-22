@@ -41,8 +41,9 @@ import {
 import {
     consumeInsertSelfDevSoundData, 
     consumeCreateSelfDevgGroup, 
-    consumeUpdateSelfDevgGroup
-} from './routes/consume_self_dev/consumer.self.dev'
+    consumeUpdateSelfDevgGroup, 
+    deleteSelfDevSoundData
+} from './routes/consume_self_dev_sound_bounce/consumer.self.dev.sounds'
 
 import {
     consumeCreateExperiencesGroup, 
@@ -55,6 +56,17 @@ import {
     consumeUpdateExperiencesData, 
     consumeDeleteExperiencesData
 } from './routes/consume_experiences/consumer.experiences'
+
+import {
+    consumeInsertSelfDevData,
+    deleteSelfDevData, 
+} from './routes/consume_self_development/consumer.self.development'
+
+import {
+    consumeInsertSelfDevDataBounce,
+    consumeUpdateSelfDevDataBounce,  
+    deleteSelfDevDataBounce
+} from './routes/consume_self_development_bounce/consumer.self.development.bounce'
 
 const runFetchFunctionsInOrder = async () => {
     console.log("🔄 Starting data synchronization...");
@@ -92,6 +104,12 @@ const runFunctionsInOrder = async () => {
         await consumeCreateExperiencesData()
         await consumeUpdateExperiencesData()
         await consumeDeleteExperiencesData()
+        await consumeInsertSelfDevData()
+        await deleteSelfDevData() 
+        await deleteSelfDevSoundData()
+        await consumeInsertSelfDevDataBounce()
+        await consumeUpdateSelfDevDataBounce()  
+        await deleteSelfDevDataBounce()
 
         console.log('All functions executed successfully in order');
     } catch (error) {
