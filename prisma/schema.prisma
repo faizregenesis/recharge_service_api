@@ -517,6 +517,7 @@ model self_development2 {
   icon                  String?
   fk_pod_id             String?        @db.Uuid
   is_explore            Boolean?
+  order                 Int?
 
   pod                   pod?           @relation(fields: [fk_pod_id], references: [id])
   sounds                self_development_sound2[]
