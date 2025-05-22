@@ -221,7 +221,7 @@ const consumeUpdateSelfDevgGroup = async () => {
                     }
                 })
                 const selfDevId = selfDevData.map(idSelfDev => idSelfDev.id)
-                // console.log("ini adalah id self dev yang sesuai dengan group: ", selfDevId);
+                console.log("ini adalah id self dev yang sesuai dengan group: ", selfDevId);
 
                 // 3. dapatkan semua data self dev sound yang akan diupdate
                 const selfDevSoundData = await prisma.self_development_sound2.findMany({
@@ -232,7 +232,7 @@ const consumeUpdateSelfDevgGroup = async () => {
                     }
                 })
                 const selfDevSoundId = selfDevSoundData.map(id => id.id)
-                // console.log("id self dev yang akan diupdate: ", selfDevSoundId);
+                console.log("id self dev yang akan diupdate: ", selfDevSoundId);
 
                 const updatedDaata = await prisma.self_development_sound2.updateMany({
                     where: {
@@ -250,7 +250,7 @@ const consumeUpdateSelfDevgGroup = async () => {
                     },
                 });
 
-                // console.log("updatedData", updatedDaata);
+                console.log("updatedData", updatedDaata);
 
                 const updatedRecords = await prisma.self_development_sound2.findMany({
                     where: {
