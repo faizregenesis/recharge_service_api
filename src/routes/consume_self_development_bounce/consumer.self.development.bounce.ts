@@ -8,7 +8,6 @@ const connectionUrl = process.env.RABBITMQ_URL;
 const createSelfDevGroup  = `${process.env.CREATE_SELF_DEVELOPMENT_GROUP_EXCHANGE}`;
 const updteSelfDevGroup  = `${process.env.UPDATE_SELF_DEVELOPMENT_GROUP_EXCHANGE}`;
 const deleteSelfDevGroup  = `${process.env.DELETE_SELF_DEVELOPMENT_GROUP_EXCHANGE}`;
-
 const consumeInsertSelfDevDataBounce = async () => {
     try {
         const connection = await amqp.connect(`${connectionUrl}`);
@@ -27,33 +26,42 @@ const consumeInsertSelfDevDataBounce = async () => {
                 try {
                     const messageContent = msg.content.toString();
                     const data = JSON.parse(messageContent);
-                    // console.log("ini adalah data yang didapat dari admin: ", data);
+                    console.log("ini adalah data yang didapat dari admin: ", data);
 
-                    const formatData = {
-                        self_development_name: data.selfDevData.self_development_name,
-                        description: data.selfDevData.description,
-                        icon: data.selfDevData.icon,
-                        fk_pod_id: data.selfDevData.fk_pod_id,
-                        is_explore: data.selfDevData.is_explore,
-                    }
-                    const fk_pod_id = data.fk_pod_id
-                    const group_ids = data.group_ids
+                    const group_ids = data.group_ids;
 
+                    // ambil semua pod yang punya fk_group_id sesuai group_ids
                     const getMatchPodData = await prisma.pod.findMany({
                         where: {
-                            fk_group_id: {in: group_ids}
+                            fk_group_id: { in: group_ids }
                         }
-                    })
-                    const podIds = getMatchPodData.map(id => id.id)
+                    });
+
+                    const podIds = getMatchPodData.map(pod => pod.id);
                     console.log("ini adalah pod ids: ", podIds);
 
-                    const getMatchSelfDevData = await prisma.self_development2.findMany({
+                    for (const podId of podIds) {
+                        await prisma.self_development2.create({
+                            data: {
+                                self_development_name: data.selfDevData.self_development_name,
+                                description: data.selfDevData.description,
+                                icon: data.selfDevData.icon,
+                                fk_pod_id: podId,
+                                is_explore: data.selfDevData.is_explore,
+                            }
+                        });
+                        console.log(`Inserted self development data into pod id: ${podId.length}`);
+                    }
+
+                    const getSelfDevToMessage = await prisma.self_development2.findMany({
                         where: {
-                            fk_pod_id: {in: fk_pod_id}
+                            fk_pod_id: {in: podIds}
                         }
                     })
 
-                    channel.ack(msg)
+                    console.log(getSelfDevToMessage.length);
+
+                    channel.ack(msg);
                 } catch (error) {
                     console.error('\x1b[31mError processing message:', error, '\x1b[0m');
                     channel.nack(msg, false, true);
