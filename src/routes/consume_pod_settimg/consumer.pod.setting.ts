@@ -10,13 +10,13 @@ import {
 
 dotenv.config(); 
 
+const connectionUrl = process.env.RABBITMQ_URL;
 const createExchangeName  = process.env.CREATE_POD_SETTING_EXCHANGE;
 const updateExchangeName  = process.env.UPDATE_POD_SETTING_EXCHANGE;
 const deleteExchangeName  = process.env.DELETE_POD_SETTING_EXCHANGE;
 const createPodSettingByGroupSendExchange  = process.env.CREATE_POD_SETTING_BY_GROUP_SEND_EXCHANGE;
 const updatePodSettingByGroupSendExchange  = process.env.UPDATE_POD_SETTING_BY_GROUP_SEND_EXCHANGE;
 const deletePodSettingByGroupSendExchange  = `${process.env.DELETE_POD_SETTING_BY_GROUP_SEND_EXCHANGE}`;
-const connectionUrl = process.env.RABBITMQ_URL;
 
 const consumeCreatePodSetting = async () => {
     try {

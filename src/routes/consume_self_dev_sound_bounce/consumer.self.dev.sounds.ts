@@ -3,15 +3,18 @@ import dotenv from  "dotenv"
 import prisma from '../../../prisma/prisma';
 import {
     bounceCreateSelfDevSoundToAdmin, 
-    bounceUpdateSelfDevSoundToAdmin
+    bounceUpdateSelfDevSoundToAdmin, 
+    bounceDeleteSelfDevSoundToAdmin
 } from './publish.to..queue';
 
 dotenv.config(); 
 
 const upsertSelfDevSoundDataExchange  = process.env.UPSERT_SELF_DEVELOPMENT_SOUND_EXCHANGE;
+const deleteSelfDevSoundDataExchange  = process.env.DELETE_SELF_DEVELOPMENT_SOUND_EXCHANGE;
+
 const createSelfDevSoundGroupExchangeName  = `${process.env.CREATE_SELF_DEV_BY_GROUP_EXCHANGE}`;
 const updateSelfDevSoundGroupExchangeName  = `${process.env.UPDATE_SELF_DEV_BY_GROUP_EXCHANGE}`;
-const deleteSelfDevSoundDataExchange  = process.env.DELETE_SELF_DEVELOPMENT_SOUND_EXCHANGE;
+const deleteSelfDevSoundGroupExchangeName  = `${process.env.DELETE_SELF_DEV_BY_GROUP_EXCHANGE}`;
 
 const connectionUrl = process.env.RABBITMQ_URL;
 
@@ -48,7 +51,7 @@ const consumeInsertSelfDevSoundData = async () => {
                         caption: data.caption, 
                         created_date: data.created_date, 
                         updated_date: data.updated_date, 
-                        deleted_at: data.deleted_at
+                        deleted_at: data.deleted_at, 
                     }, 
                     create: {
                         self_development_id: data.self_development_id,
@@ -136,6 +139,7 @@ const consumeCreateSelfDevgGroup = async () => {
                             sound_path: data.soundData.sound_path, 
                             file_path: data.soundData.file_path, 
                             caption: data.soundData.caption,
+                            order: data.soundData.order,
                             created_date: now,
                             updated_date: now
                         }
@@ -153,7 +157,8 @@ const consumeCreateSelfDevgGroup = async () => {
                     duration: sound.duration, 
                     description: sound.description, 
                     sound_path: sound.sound_path, 
-                    file_path: sound.file_path
+                    file_path: sound.file_path, 
+                    order: sound.order
                 }))
                 console.log("Inserted records:", formattingBounceMessage);
                 
@@ -342,9 +347,83 @@ const deleteSelfDevSoundData = async () => {
     }
 };
 
+const deleteSelfDevSoundDataGroup = async () => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(`${deleteSelfDevSoundGroupExchangeName}`, 'fanout', { durable: true });
+
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, `${deleteSelfDevSoundGroupExchangeName}`, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mPod is waiting for messages on queue (delete self def sound data bounce): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (!msg) return;
+
+            try {
+                const messageContent = msg.content.toString();
+                const data = JSON.parse(messageContent);
+
+                // console.log("ini adalah data yang didapat: ", data)
+
+                const group_ids = data.group_ids 
+                const selfDevSoundId = data.selfDevSoundId 
+
+                const getSelfDevData = await prisma.self_development_sound2.findMany({
+                    where: {
+                        id: selfDevSoundId, 
+                    }
+                });
+                const selfDevOrder = getSelfDevData.map(order => order.order)
+
+                const getPodata = await prisma.pod.findMany({
+                    where: {
+                        fk_group_id: {in: group_ids}
+                    }
+                })
+                const podId = getPodata.map(id => id.id)
+                // console.log("podId", podId);
+
+                const getSelfDevDataMatch = await prisma.self_development2.findMany({
+                    where: {
+                        fk_pod_id: {in: podId}
+                    }
+                })
+                const selfDevDataId = getSelfDevDataMatch.map(id => id.id).filter(id => id !== null);
+                // console.log("selfDevDataId", selfDevDataId);
+
+                const selfDevSoundToAdmin = await prisma.self_development_sound2.findMany({
+                    where: {
+                        self_development: { id: { in: selfDevDataId } },
+                        order: Number(selfDevOrder)
+                    }
+                })
+                const selfDevSoundIds = selfDevSoundToAdmin.map(id => id.id)
+                console.log("self dev sound ids: ", selfDevSoundIds);
+                const message = {
+                    selfDevSoundIds: selfDevSoundIds
+                }
+
+                await bounceDeleteSelfDevSoundToAdmin(message)
+
+                channel.ack(msg);
+            } catch (error: any) {
+                console.error('\x1b[31m❌ Error processing message:', error.message, '\x1b[0m');
+                channel.nack(msg, false, true);
+            }
+        });
+    } catch (error) {
+        console.error('\x1b[31m❌ Error initializing consumer:', error, '\x1b[0m');
+    }
+};
+
 export {
     consumeCreateSelfDevgGroup, 
-    consumeInsertSelfDevSoundData, 
     consumeUpdateSelfDevgGroup, 
-    deleteSelfDevSoundData
+    deleteSelfDevSoundDataGroup, 
+    consumeInsertSelfDevSoundData, 
+    deleteSelfDevSoundData, 
 }
