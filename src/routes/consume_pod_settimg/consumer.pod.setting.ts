@@ -434,7 +434,7 @@ const consumeCreatePodSettingGroup = async () => {
                 console.log("Daftar experience IDs yang akan diupdate:", ExpIds);
 
                 // 3. Persiapkan data untuk createMany
-                const detailExperienceData = ExpIds.map(expId => {
+                const detailExperienceData = ExpIds.map((expId: any) => {
                     return {
                         stroboscopic_light: detail_experience[0].stroboscopic_light,
                         audio_surround_sound: detail_experience[0].audio_surround_sound,
@@ -448,6 +448,8 @@ const consumeCreatePodSettingGroup = async () => {
                         olfactory_engagement: detail_experience[0].olfactory_engagement,
                         binaural_beats_isochronic_tones: detail_experience[0].binaural_beats_isochronic_tones,
                         direct_neutral_stimulation: detail_experience[0].direct_neutral_stimulation,
+                        order_experience: detail_experience[0].order_experience, 
+                        order: detail_experience[0].order, 
                         experience_id: expId,
                         duration: detail_experience[0].duration,
                         scent: detail_experience[0].scent,
@@ -513,7 +515,9 @@ const consumeCreatePodSettingGroup = async () => {
                     detailId: detailId
                 }
 
-                console.log("Message yang akan dikirim:", message);
+                console.log(data.detail_experience);
+
+                // console.log("Message yang akan dikirim:", message);
 
                 await sendCreatePodSettingByGroup(message)
 
@@ -675,26 +679,28 @@ const consumeDeleteDetailExpByGroup = async () => {
 
                     const detailExperienceId = await prisma.detail_experience2.findMany({
                         where: {
-                            experience_id: {in: experienceIdMathc}
+                            experience_id: {in: experienceIdMathc}, 
+                            order: {in: order}, 
+                            order_experience: {in: order_experience}
                         }
                     })
                     const detailExpId = detailExperienceId.map(id => id.id) 
-                    console.log("data detail yang akan dihapus: ", detailExpId);
+                    // console.log("data detail yang akan dihapus: ", detailExpId);
 
                     const message = {
                         pod_ids: podIdsMatchGroup, 
                         experience_ids: experienceIdMathc,  
                         detailExpId: detailExpId
                     }
-                    console.log("ini adalah message yang akan dikirim: ", message);
+                    // console.log("ini adalah message yang akan dikirim: ", message);
 
                     await sendDeletePodSettingByGroup(message)
 
                     const deleteDetailExperience = await prisma.detail_experience2.deleteMany({
                         where: {
                             id: {in: detailExpId}, 
-                            // order: {in: order}, 
-                            // order_experience: {in: order_experience}
+                            order: {in: order}, 
+                            order_experience: {in: order_experience}
                         }
                     })
 
