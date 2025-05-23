@@ -42,7 +42,8 @@ import {
     consumeInsertSelfDevSoundData, 
     consumeCreateSelfDevgGroup, 
     consumeUpdateSelfDevgGroup, 
-    deleteSelfDevSoundData
+    deleteSelfDevSoundData, 
+    deleteSelfDevSoundDataGroup
 } from './routes/consume_self_dev_sound_bounce/consumer.self.dev.sounds'
 
 import {
@@ -98,6 +99,7 @@ const runFunctionsInOrder = async () => {
         await consumeInsertSelfDevSoundData()
         await consumeCreateSelfDevgGroup()
         await consumeUpdateSelfDevgGroup()
+        await deleteSelfDevSoundDataGroup()
         await consumeCreateExperiencesGroup()
         await consumeUpdateExperiencesGroup()
         await consumeDeleteExperiencesGroup()
