@@ -101,13 +101,20 @@ const consumeCreateSelfDevgGroup = async () => {
                 const messageContent = msg.content.toString();
                 const data = JSON.parse(messageContent);
 
-                console.log("ini adalah data yang didapat dari admin: ", data);
+                // console.log("ini adalah data yang didapat dari admin: ", data);
+                const orderData = data.soundData.order
+                const groupIds = data.group_ids
+                const soundData = data.soundData
+
+                // console.log("ini adalah order ", orderData);
+                // console.log("ini adalah group id ", groupIds);
+                // console.log("ini adalah sound data:  ", soundData);
 
                 // 1. dapatkan semua data pod yang sesuai dengan group terlebih dahulu
                 const podData = await prisma.pod.findMany({
                     where: {
                         fk_group_id: {
-                            in: data.group_ids
+                            in: groupIds
                         }
                     }
                 })
@@ -119,12 +126,12 @@ const consumeCreateSelfDevgGroup = async () => {
                     where: {
                         fk_pod_id: {
                             in: podIds
-                        }
-                        // self_development_name: data.self_development_name
+                        },
+                        order: orderData
                     }
                 })
                 const selfDevId = selfDevData.map(idSelfDev => idSelfDev.id)
-                console.log("ini adalah id self dev yang sesuai dengan group: ", selfDevId);
+                // console.log("ini adalah id self dev yang sesuai dengan group: ", selfDevData);
 
                 // 3. simpan data ke dalam database:
                 const now = new Date();
@@ -408,6 +415,14 @@ const deleteSelfDevSoundDataGroup = async () => {
                 }
 
                 await bounceDeleteSelfDevSoundToAdmin(message)
+
+                const deleteSelfDevSound = await prisma.self_development_sound2.deleteMany({
+                    where: {
+                        id: {in: selfDevSoundIds}
+                    }
+                })
+
+                console.log("self dev sound data deleted by group: ", deleteSelfDevSound);
 
                 channel.ack(msg);
             } catch (error: any) {

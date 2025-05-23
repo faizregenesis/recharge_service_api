@@ -217,6 +217,13 @@ const deleteSelfDevDataBounce = async () => {
                         selfDevIds: selfDevIds
                     }
 
+                    const deleteSelfDevSoundData = await prisma.self_development_sound2.deleteMany({
+                        where: {
+                            self_development_id: {in: selfDevIds}
+                        }
+                    })
+
+                    console.log("self dev sounde deleted: ", deleteSelfDevSoundData);
                     console.log(message);
                     await bounceDeleteSelfDevToAdmin(message)
 
