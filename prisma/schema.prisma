@@ -309,6 +309,7 @@ model pod {
   // pod_logs              pod_logs[]
   // template_properties   template_properties[]
   self_development2      self_development2[]
+  global_setting         global_setting2[]
 
   customer              customer?              @relation(fields: [fk_customer], references: [id])
   app_version           app_version?           @relation(fields: [fk_app_version], references: [id])
@@ -545,4 +546,55 @@ model self_development_sound2 {
   created_date          DateTime?        @default(now()) @db.Timestamptz(6)
   updated_date          DateTime?        @default(now()) @db.Timestamptz(6)
   deleted_at            DateTime?        @db.Timestamp(6)
+}
+
+
+model global_setting2 {
+  id                     String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pod_id                 String?      @db.Uuid
+  app_timeout            Int?
+  default_volume         Int?
+  pob_threshold          Int?
+  pob_timeout_login      Int?
+  pob_pitch_offset       Int?
+
+  code_number            Int?
+  rgb_value              String? 
+  default_volume_tunnel  Int? 
+  default_volume_guide   Int? 
+  nir                    Int? 
+  pemf                   Int? 
+  uva_enable             Boolean      @default(false)
+  uvb_enable             Boolean      @default(false)
+  uvc_enable             Boolean      @default(false)
+
+  dissable_full_mode     Boolean      @default(false) 
+  session_mode           Boolean      @default(false)
+  work_rest_play         Boolean      @default(false)
+  self_develepment       Boolean      @default(false)
+  demo_mode              Boolean      @default(false)
+
+  dissable_lite_mode     Boolean      @default(false) 
+
+  dissable_bluetooth     Boolean      @default(false) 
+
+  fir_temprature         Int?
+  idle_track_repeat      Boolean      @default(false) 
+  idle_track_volume      Int?
+  lamp_intensity         Int?
+  led_aniation           Boolean      @default(false) 
+  led_intentsity         Int?
+  pod_pitch              Int?
+  strobe_intensity       Int?
+  temperature            Int?
+  playing_track          Int?
+  uva                    Int?
+  uvb                    Int?
+  uvc                    Int?
+  vibration              Int?
+  pod                    pod?         @relation(fields: [pod_id], references: [id])
+
+  created_date           DateTime     @default(now()) @db.Timestamptz(6)
+  update_date            DateTime     @default(now()) @db.Timestamptz(6)
+  deleted_at             DateTime?    @db.Timestamp(6)
 }
