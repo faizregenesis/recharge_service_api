@@ -251,9 +251,17 @@ const consumeUpdatePodSettingGroup = async () => {
                 const messageContent = msg.content.toString();
                 const data = JSON.parse(messageContent);
 
-                // console.log("ini adalah data yang didapatkan dari admin: ", data.detail_experience);
+                // console.log("ini adalah data yang didapatkan dari admin: ", data);
 
-                const { experience_id, detail_experience, group_ids } = data;
+                const experience_id = data.experience_id 
+                const detail_experience = data.detail_experience 
+                const group_ids = data.group_ids  
+                const experienceLinkClass = data.experienceLinkClass
+                const experienceOrder = data.experienceOrder
+                const detailId = data.detail_experience[0].id
+
+                console.log("detail id: ", detailId);
+
                 if (!experience_id || !Array.isArray(detail_experience) || !group_ids) {
                     console.error("\x1b[31m⚠️ Invalid message format:\x1b[0m", data);
                     throw new Error("Invalid message format");
@@ -268,18 +276,13 @@ const consumeUpdatePodSettingGroup = async () => {
                 });
 
                 const podIdByGroupId = podDataByGroup.map(data => data.id)
-                const experienceLinkClass = data.experienceLinkClass
 
-                // console.log("ini adalah data pod id by group: ", podDataByGroup);
-                // console.log("experienceLinkClass", experienceLinkClass);
                 const experienceByPod = await prisma.experiences2.findMany({
                     where: {
                         pod_id: {
                             in: podIdByGroupId
                         }, 
-                        link_class: {
-                            in: experienceLinkClass
-                        }
+                        order_experience: experienceOrder[0]
                     }
                 })
                 // console.log("experienceByPod", experienceByPod);
@@ -296,6 +299,34 @@ const consumeUpdatePodSettingGroup = async () => {
 
                 // ini adalah id detail exp yang perlu di update
                 const detailExpId = detailExpUpdate.map(detailExpId => detailExpId.id)
+
+                const directUpdate = await prisma.detail_experience2.updateMany({
+                    where: {
+                        id: detailId.toString()
+                    }, 
+                    data: {
+                        stroboscopic_light: detail_experience[0].stroboscopic_light,
+                        audio_surround_sound: detail_experience[0].audio_surround_sound,
+                        vibro_acoustics: detail_experience[0].vibro_acoustics,
+                        led_intensity: detail_experience[0].led_intensity,
+                        led_color: detail_experience[0].led_color,
+                        sound_scape: detail_experience[0].sound_scape,
+                        infra_red_nea_ir: detail_experience[0].infra_red_nea_ir,
+                        infra_red_far_ir: detail_experience[0].infra_red_far_ir,
+                        pemf_therapy: detail_experience[0].pemf_therapy,
+                        olfactory_engagement: detail_experience[0].olfactory_engagement,
+                        binaural_beats_isochronic_tones: detail_experience[0].binaural_beats_isochronic_tones,
+                        direct_neutral_stimulation: detail_experience[0].direct_neutral_stimulation,
+                        duration: detail_experience[0].duration,
+                        scent: detail_experience[0].scent,
+                        song: detail_experience[0].song,
+                        lamp: detail_experience[0].lamp,
+                        video: detail_experience[0].video, 
+                        order: detail_experience[0].order
+                    }
+                })
+
+                console.log("direct update: ", directUpdate);
 
                 // TODO : 2 simpan data yang didapatkan berdasarkan group id
                 await prisma.detail_experience2.updateMany({
@@ -696,6 +727,14 @@ const consumeDeleteDetailExpByGroup = async () => {
 
                     await sendDeletePodSettingByGroup(message)
 
+                    const directDelete = await prisma.detail_experience2.delete({
+                        where: {
+                            id: detailId.toString()
+                        }
+                    })
+
+                    console.log(directDelete);
+
                     const deleteDetailExperience = await prisma.detail_experience2.deleteMany({
                         where: {
                             id: {in: detailExpId}, 
@@ -717,7 +756,6 @@ const consumeDeleteDetailExpByGroup = async () => {
         console.error('\x1b[31mError initializing consumer:', error, '\x1b[0m');
     }
 };
-
 
 export {
     consumeCreatePodSetting, 
