@@ -114,6 +114,7 @@ const consumeUpdateExperiencesGroup = async () => {
             try {
                 const data = JSON.parse(msg.content.toString());
                 const groupIds = data.group_ids;
+                const expId = data.expId;
 
                 // Ambil semua pod yang terkait dengan group_id yang dikirim
                 const pods = await prisma.pod.findMany({
@@ -136,13 +137,31 @@ const consumeUpdateExperiencesGroup = async () => {
 
                 console.log("target experience to update: ", targetExperiences.length);
 
+                const directUpdate = await prisma.experiences2.update({
+                    where: {
+                        id: expId.toString()
+                    }, 
+                    data: {
+                        menu_name: data.data.menu_name,
+                        link_class: data.data.menu_name,
+                        icon_class: data.data.menu_name,
+                        icon_name: data.data.menu_name,
+                        information: data.data.menu_name,
+                        active: data.data.active,
+                        mode_id: data.data.mode_id,
+                        order_experience: data.data.order_experience,
+                        update_date: new Date()
+                    }
+                })
+                console.log("Direct Updtate", directUpdate);
+
                 for (const exp of targetExperiences) {
                     const updateData = {
-                        link_class: data.data.link_class,
-                        icon_class: data.data.icon_class,
-                        icon_name: data.data.icon_name,
                         menu_name: data.data.menu_name,
-                        information: data.data.information,
+                        link_class: data.data.menu_name,
+                        icon_class: data.data.menu_name,
+                        icon_name: data.data.menu_name,
+                        information: data.data.menu_name,
                         active: data.data.active,
                         mode_id: data.data.mode_id,
                         order_experience: data.data.order_experience,
@@ -205,6 +224,7 @@ const consumeDeleteExperiencesGroup = async () => {
                 const data = JSON.parse(messageContent);
 
                 console.log("ini adalah data yang didapat dari admin: ", data);
+                const expIdData  = data.expId
 
                 const group_ids = data.group_ids
                 const order_experience = data.data.order_experience
@@ -232,13 +252,27 @@ const consumeDeleteExperiencesGroup = async () => {
                 const expId = getMatchExpData.map(id => id.id) 
                 console.log("ini adalah match experience_id: ", expId);
 
-                    const deleteDetailExp2 = await prisma.detail_experience2.deleteMany({
+                const message = {
+                    data: expId, 
+                    order_experience: order_experience
+                }
+
+                await bounceDeleteExperiences(message)
+
+                const deleteDetailExp2 = await prisma.detail_experience2.deleteMany({
                     where: {
                         experience_id: {
                             in: expId
                         }
                     }
                 })
+
+                const directDelete = await prisma.experiences2.delete({
+                    where: {
+                        id: expIdData.toString()
+                    }
+                })
+                console.log("direct delete: ", directDelete);
 
                 const DeleteManyExp = await prisma.experiences2.deleteMany({
                     where: {
@@ -249,13 +283,6 @@ const consumeDeleteExperiencesGroup = async () => {
                 });
                 console.log("experience deleted", DeleteManyExp);
                 console.log("detail experience deleted", deleteDetailExp2);
-
-                const message = {
-                    data: expId, 
-                    order_experience: order_experience
-                }
-
-                await bounceDeleteExperiences(message)
 
                 channel.ack(msg);
             } catch (error: any) {

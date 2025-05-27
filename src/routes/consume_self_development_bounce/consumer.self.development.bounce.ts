@@ -107,7 +107,11 @@ const consumeUpdateSelfDevDataBounce = async () => {
                     // console.log("ini adalah data yang didapat dari admin: ", data);
 
                     const selfDevData = data.data
+                    const orderData = data.data.order
                     const group_ids = data.group_ids
+                    const selfDevId = data.selfDevId
+
+                    console.log("order: ", orderData);
 
                     const getMatchPodData = await prisma.pod.findMany({
                         where: {
@@ -119,7 +123,7 @@ const consumeUpdateSelfDevDataBounce = async () => {
                     const getSelfDevData = await prisma.self_development2.findMany({
                         where: {
                             fk_pod_id: {in: podIds}, 
-                            order: selfDevData.order
+                            order: orderData
                         }
                     })
                     const idSelvDev =  getSelfDevData.map(id => id.id)
@@ -136,6 +140,26 @@ const consumeUpdateSelfDevDataBounce = async () => {
                     console.log("podIds:",  podIds);
                     console.log("formatData", formatData);
 
+                    const allSelfDev = await prisma.self_development2.findMany({
+                        where: {
+                            fk_pod_id: { in: podIds },
+                        },
+                        select: {
+                            id: true,
+                            fk_pod_id: true,
+                            order: true,
+                            self_development_name: true,
+                        }
+                    });
+                    console.log("Semua self dev dari pod terkait:", allSelfDev.length);
+
+                    const updateSelfDevDataDirect = await prisma.self_development2.update({
+                        where: {
+                            id: selfDevId
+                        }, 
+                        data: formatData
+                    })
+
                     const updateSelfDevData = await prisma.self_development2.updateMany({
                         where: {
                             id: {in: idSelvDev}
@@ -143,6 +167,7 @@ const consumeUpdateSelfDevDataBounce = async () => {
                         data: formatData
                     })
 
+                    console.log("updateSelfDevDataDirect: ", updateSelfDevDataDirect.id);
                     console.log("self dev updated: ", updateSelfDevData);
 
                     const message = {
@@ -183,7 +208,7 @@ const deleteSelfDevDataBounce = async () => {
                     const messageContent = msg.content.toString();
                     const data = JSON.parse(messageContent);
 
-                    // console.log("ini adalah data yang diterima: ", data);
+                    console.log("ini adalah data yang diterima: ", data);
 
                     const selfDevId = data.selfDevId
                     const group_ids = data.group_ids
@@ -200,12 +225,12 @@ const deleteSelfDevDataBounce = async () => {
                             id: selfDevId, 
                         }
                     })
-                    const orderSelfDev = getOrder.map(order => order.order).filter(order => order !== null);
+                    const orderSelfDev = getOrder.map(order => order.order);
 
                     const getSelfDev = await prisma.self_development2.findMany({
                         where: {
                             fk_pod_id: { in: podId }, 
-                            order: {in: orderSelfDev}
+                            order: Number(orderSelfDev)
                         },
                     })
                     const selfDevIds = getSelfDev.map(id => id.id)
@@ -217,15 +242,30 @@ const deleteSelfDevDataBounce = async () => {
                         selfDevIds: selfDevIds
                     }
 
+                    await bounceDeleteSelfDevToAdmin(message)
+
+                    const directDeleteSound = await prisma.self_development_sound2.deleteMany({
+                        where: {
+                            self_development_id: selfDevId
+                        }
+                    })
+
                     const deleteSelfDevSoundData = await prisma.self_development_sound2.deleteMany({
                         where: {
                             self_development_id: {in: selfDevIds}
                         }
                     })
 
-                    console.log("self dev sounde deleted: ", deleteSelfDevSoundData);
-                    console.log(message);
-                    await bounceDeleteSelfDevToAdmin(message)
+                    const directDelete = await prisma.self_development2.delete({
+                        where: {
+                            id: selfDevId
+                        }
+                    })
+
+                    console.log("Direct Delete selfDev", directDelete.id);
+                    console.log("Direct Delete Sound", directDeleteSound);
+                    console.log("self dev sound deleted: ", deleteSelfDevSoundData);
+                    console.log("message", message);
 
                     const deleteSelfDev = await prisma.self_development2.deleteMany({
                         where: {

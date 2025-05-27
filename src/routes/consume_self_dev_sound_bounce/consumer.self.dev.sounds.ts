@@ -107,10 +107,10 @@ const consumeCreateSelfDevSoundgGroup = async () => {
                 const soundData = data.soundData
                 const orderselfDev = data.orderselfDev
 
-                console.log("ini adalah order sound", orderData);
-                console.log("ini adalah group id ", groupIds);
-                console.log("ini adalah sound data:  ", soundData);
-                console.log("order self dev data", orderselfDev);
+                // console.log("ini adalah order sound", orderData);
+                // console.log("ini adalah group id ", groupIds);
+                // console.log("ini adalah sound data:  ", soundData);
+                // console.log("order self dev data", orderselfDev);
 
                 // 1. dapatkan semua data pod yang sesuai dengan group terlebih dahulu
                 const podData = await prisma.pod.findMany({
@@ -166,6 +166,7 @@ const consumeCreateSelfDevSoundgGroup = async () => {
                     duration: sound.duration, 
                     description: sound.description, 
                     sound_path: sound.sound_path, 
+                    caption: sound.caption,
                     file_path: sound.file_path, 
                     order: sound.order
                 }))
@@ -233,7 +234,6 @@ const consumeUpdateSelfDevSoundgGroup = async () => {
                             in: podIds
                         }, 
                         order: orderselfDev[0],
-                        // self_development_name: data.self_development_name
                     }
                 })
                 const selfDevId = selfDevData.map(idSelfDev => idSelfDev.id)
@@ -249,6 +249,21 @@ const consumeUpdateSelfDevSoundgGroup = async () => {
                 })
                 const selfDevSoundId = selfDevSoundData.map(id => id.id)
                 console.log("id self dev yang akan diupdate: ", selfDevSoundId);
+
+                const updatedSelfDevDirect = await prisma.self_development_sound2.update({
+                    where: {
+                        id: data.soundId 
+                    },
+                    data: {
+                        sound_code: data.soundData.sound_code,
+                        title: data.soundData.title,
+                        duration: data.soundData.duration,
+                        description: data.soundData.description,
+                        sound_path: data.soundData.sound_path,
+                        file_path: data.soundData.file_path,
+                        caption: data.soundData.caption,
+                    },
+                });
 
                 const updatedDaata = await prisma.self_development_sound2.updateMany({
                     where: {
@@ -266,6 +281,7 @@ const consumeUpdateSelfDevSoundgGroup = async () => {
                     },
                 });
 
+                console.log("updatedSelfDevDirect", updatedSelfDevDirect);
                 console.log("updatedData", updatedDaata);
 
                 const updatedRecords = await prisma.self_development_sound2.findMany({
@@ -382,6 +398,7 @@ const deleteSelfDevSoundDataGroup = async () => {
 
                 // console.log("ini adalah data yang didapat: ", data)
 
+                const soundId = data.soundId
                 const group_ids = data.group_ids 
                 const selfDevSoundId = data.selfDevSoundId
                 const orderselfDev = data.orderselfDev
@@ -413,6 +430,12 @@ const deleteSelfDevSoundDataGroup = async () => {
                 const selfDevDataId = getSelfDevDataMatch.map(id => id.id).filter(id => id !== null);
                 console.log("self dev order: ", getSelfDevDataMatch.map(order => order.order));
 
+                const deleteSynch = await prisma.self_development_sound2.delete({
+                    where: {
+                        id: soundId
+                    } 
+                })
+
                 const selfDevSoundToAdmin = await prisma.self_development_sound2.findMany({
                     where: {
                         self_development: { id: { in: selfDevDataId } },
@@ -434,7 +457,8 @@ const deleteSelfDevSoundDataGroup = async () => {
                     } 
                 })
 
-                console.log("self dev sound data deleted by group: ", deleteSelfDevSound);
+                console.log("deleteSynch: ", deleteSynch);
+                console.log("deleteSelfDevSound", deleteSelfDevSound);
 
                 channel.ack(msg);
             } catch (error: any) {
