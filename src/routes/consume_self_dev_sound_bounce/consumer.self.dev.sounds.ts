@@ -81,7 +81,7 @@ const consumeInsertSelfDevSoundData = async () => {
     }
 };
 
-const consumeCreateSelfDevgGroup = async () => {
+const consumeCreateSelfDevSoundgGroup = async () => {
     try {
         const connection = await amqp.connect(`${connectionUrl}`);
         const channel = await connection.createChannel();
@@ -105,10 +105,12 @@ const consumeCreateSelfDevgGroup = async () => {
                 const orderData = data.soundData.order
                 const groupIds = data.group_ids
                 const soundData = data.soundData
+                const orderselfDev = data.orderselfDev
 
-                // console.log("ini adalah order ", orderData);
-                // console.log("ini adalah group id ", groupIds);
-                // console.log("ini adalah sound data:  ", soundData);
+                console.log("ini adalah order sound", orderData);
+                console.log("ini adalah group id ", groupIds);
+                console.log("ini adalah sound data:  ", soundData);
+                console.log("order self dev data", orderselfDev);
 
                 // 1. dapatkan semua data pod yang sesuai dengan group terlebih dahulu
                 const podData = await prisma.pod.findMany({
@@ -126,12 +128,12 @@ const consumeCreateSelfDevgGroup = async () => {
                     where: {
                         fk_pod_id: {
                             in: podIds
-                        },
-                        order: orderData
+                        }, 
+                        order: orderselfDev[0]
                     }
                 })
                 const selfDevId = selfDevData.map(idSelfDev => idSelfDev.id)
-                // console.log("ini adalah id self dev yang sesuai dengan group: ", selfDevData);
+                console.log("ini adalah id self dev yang sesuai dengan group: ", selfDevData);
 
                 // 3. simpan data ke dalam database:
                 const now = new Date();
@@ -154,7 +156,7 @@ const consumeCreateSelfDevgGroup = async () => {
                 });
 
                 const insertedRecords = await Promise.all(insertPromises);
-                console.log("insertedRecords", insertedRecords);
+                // console.log("insertedRecords", insertedRecords);
 
                 const formattingBounceMessage = insertedRecords.map(sound => ({
                     id: sound.id, 
@@ -167,7 +169,7 @@ const consumeCreateSelfDevgGroup = async () => {
                     file_path: sound.file_path, 
                     order: sound.order
                 }))
-                console.log("Inserted records:", formattingBounceMessage);
+                // console.log("Inserted records:", formattingBounceMessage);
                 
                 const message = {
                     data: formattingBounceMessage, 
@@ -190,7 +192,7 @@ const consumeCreateSelfDevgGroup = async () => {
     }
 };
 
-const consumeUpdateSelfDevgGroup = async () => {
+const consumeUpdateSelfDevSoundgGroup = async () => {
     try {
         const connection = await amqp.connect(`${connectionUrl}`);
         const channel = await connection.createChannel();
@@ -209,8 +211,9 @@ const consumeUpdateSelfDevgGroup = async () => {
             try {
                 const messageContent = msg.content.toString();
                 const data = JSON.parse(messageContent);
-
                 // console.log("ini adalah data yang didapat dari admin: ", data);
+
+                const orderselfDev = data.orderselfDev
 
                 // 1. dapatkan semua data pod yang sesuai dengan group terlebih dahulu
                 const podData = await prisma.pod.findMany({
@@ -229,7 +232,8 @@ const consumeUpdateSelfDevgGroup = async () => {
                         fk_pod_id: {
                             in: podIds
                         }, 
-                        self_development_name: data.self_development_name
+                        order: orderselfDev[0],
+                        // self_development_name: data.self_development_name
                     }
                 })
                 const selfDevId = selfDevData.map(idSelfDev => idSelfDev.id)
@@ -287,8 +291,10 @@ const consumeUpdateSelfDevgGroup = async () => {
                     group_ids: data.group_ids, 
                     podIds: podIds, 
                     data0: formattingBounceMessage[0], 
-                    self_development_name: data.self_development_name
+                    self_development_name: data.self_development_name, 
+                    orderselfDev: orderselfDev
                 }
+                console.log("formattingBounceMessage", formattingBounceMessage);
                 // console.log("ini adalah message yang akan dikirim ke pod dan juga ke admin: ", message);
 
                 await bounceUpdateSelfDevSoundToAdmin(message);
@@ -377,7 +383,11 @@ const deleteSelfDevSoundDataGroup = async () => {
                 // console.log("ini adalah data yang didapat: ", data)
 
                 const group_ids = data.group_ids 
-                const selfDevSoundId = data.selfDevSoundId 
+                const selfDevSoundId = data.selfDevSoundId
+                const orderselfDev = data.orderselfDev
+
+                console.log("order self dev data", orderselfDev[0]); 
+                console.log("group id", group_ids); 
 
                 const getSelfDevData = await prisma.self_development_sound2.findMany({
                     where: {
@@ -392,15 +402,16 @@ const deleteSelfDevSoundDataGroup = async () => {
                     }
                 })
                 const podId = getPodata.map(id => id.id)
-                // console.log("podId", podId);
+                console.log("podId", podId);
 
                 const getSelfDevDataMatch = await prisma.self_development2.findMany({
                     where: {
-                        fk_pod_id: {in: podId}
+                        fk_pod_id: {in: podId}, 
+                        order: orderselfDev[0]
                     }
                 })
                 const selfDevDataId = getSelfDevDataMatch.map(id => id.id).filter(id => id !== null);
-                // console.log("selfDevDataId", selfDevDataId);
+                console.log("self dev order: ", getSelfDevDataMatch.map(order => order.order));
 
                 const selfDevSoundToAdmin = await prisma.self_development_sound2.findMany({
                     where: {
@@ -409,17 +420,18 @@ const deleteSelfDevSoundDataGroup = async () => {
                     }
                 })
                 const selfDevSoundIds = selfDevSoundToAdmin.map(id => id.id)
-                console.log("self dev sound ids: ", selfDevSoundIds);
                 const message = {
                     selfDevSoundIds: selfDevSoundIds
                 }
 
                 await bounceDeleteSelfDevSoundToAdmin(message)
 
+                console.log("ini adalah self dev sound id yang akan di delete (delete group): ", selfDevSoundIds);
+
                 const deleteSelfDevSound = await prisma.self_development_sound2.deleteMany({
                     where: {
                         id: {in: selfDevSoundIds}
-                    }
+                    } 
                 })
 
                 console.log("self dev sound data deleted by group: ", deleteSelfDevSound);
@@ -436,8 +448,8 @@ const deleteSelfDevSoundDataGroup = async () => {
 };
 
 export {
-    consumeCreateSelfDevgGroup, 
-    consumeUpdateSelfDevgGroup, 
+    consumeCreateSelfDevSoundgGroup, 
+    consumeUpdateSelfDevSoundgGroup, 
     deleteSelfDevSoundDataGroup, 
     consumeInsertSelfDevSoundData, 
     deleteSelfDevSoundData, 
