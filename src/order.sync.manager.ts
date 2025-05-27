@@ -40,8 +40,8 @@ import {
 
 import {
     consumeInsertSelfDevSoundData, 
-    consumeCreateSelfDevgGroup, 
-    consumeUpdateSelfDevgGroup, 
+    consumeCreateSelfDevSoundgGroup, 
+    consumeUpdateSelfDevSoundgGroup, 
     deleteSelfDevSoundData, 
     deleteSelfDevSoundDataGroup
 } from './routes/consume_self_dev_sound_bounce/consumer.self.dev.sounds'
@@ -71,7 +71,7 @@ import {
 
 import {
     consumeUpsertGlobalSettingBounce
-} from './routes/consume_global_setting copy/consumer.global.setting'
+} from './routes/consume_global_setting_bounce/consumer.global.setting'
 
 const runFetchFunctionsInOrder = async () => {
     console.log("🔄 Starting data synchronization...");
@@ -101,8 +101,8 @@ const runFunctionsInOrder = async () => {
         await consumeCreatePodSettingGroup()
         await consumeDeleteDetailExpByGroup()
         await consumeInsertSelfDevSoundData()
-        await consumeCreateSelfDevgGroup()
-        await consumeUpdateSelfDevgGroup()
+        await consumeCreateSelfDevSoundgGroup()
+        await consumeUpdateSelfDevSoundgGroup()
         await deleteSelfDevSoundDataGroup()
         await consumeCreateExperiencesGroup()
         await consumeUpdateExperiencesGroup()
