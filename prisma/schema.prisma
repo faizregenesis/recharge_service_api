@@ -540,7 +540,8 @@ model self_development_sound2 {
   title               String?
   caption             String?
   order               Int?
-  
+  video               String?
+
   self_development    self_development2?  @relation(fields: [self_development_id], references: [id])
 
   created_date          DateTime?        @default(now()) @db.Timestamptz(6)
