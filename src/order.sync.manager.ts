@@ -73,50 +73,61 @@ import {
     consumeUpsertGlobalSettingBounce
 } from './routes/consume_global_setting_bounce/consumer.global.setting'
 
+import {
+    consumeDeleteTask2, 
+    consumeTask2,
+    fetchInitialTaskType, 
+    fetchInitialTask
+} from './routes/consume_task/consumer.task2.setting'
+
 const runFetchFunctionsInOrder = async () => {
     console.log("🔄 Starting data synchronization...");
 
     await fetchInitialVersionData()
     await fetchInitialGroupeData()
     await fetchInitialPodData()
+    await fetchInitialTaskType() 
+    await fetchInitialTask()
 
     console.log("🎉 All Starting data synchronization executed successfully in order.");
 };
 
 const runFunctionsInOrder = async () => {
     try {
-        await consumeUserData()
-        await consumePodData()
-        await consumeDeletePodData()
-        await consumeUsersDataUpdate()
-        await consumeResetPassword()
-        await syncDisclaimerData()
-        await consumeUpdateQuestionMatrix()
-        await consumeInsertQuestionMatrix() 
-        await consumeGroupData()
-        await consumeCreatePodSetting()
-        await consumeUpdatePodSetting()
-        await consumeDeletePodSetting()
-        await consumeUpdatePodSettingGroup()
-        await consumeCreatePodSettingGroup()
-        await consumeDeleteDetailExpByGroup()
-        await consumeInsertSelfDevSoundData()
-        await consumeCreateSelfDevSoundgGroup()
-        await consumeUpdateSelfDevSoundgGroup()
-        await deleteSelfDevSoundDataGroup()
-        await consumeCreateExperiencesGroup()
-        await consumeUpdateExperiencesGroup()
-        await consumeDeleteExperiencesGroup()
-        await consumeCreateExperiencesData()
-        await consumeUpdateExperiencesData()
-        await consumeDeleteExperiencesData()
-        await consumeInsertSelfDevData()
-        await deleteSelfDevData() 
-        await deleteSelfDevSoundData()
-        await consumeInsertSelfDevDataBounce()
-        await consumeUpdateSelfDevDataBounce()  
-        await deleteSelfDevDataBounce()
-        await consumeUpsertGlobalSettingBounce()
+        // await consumeUserData()
+        // await consumePodData()
+        // await consumeDeletePodData()
+        // await consumeUsersDataUpdate()
+        // await consumeResetPassword()
+        // await syncDisclaimerData()
+        // await consumeUpdateQuestionMatrix()
+        // await consumeInsertQuestionMatrix() 
+        // await consumeGroupData()
+        // await consumeCreatePodSetting()
+        // await consumeUpdatePodSetting()
+        // await consumeDeletePodSetting()
+        // await consumeUpdatePodSettingGroup()
+        // await consumeCreatePodSettingGroup()
+        // await consumeDeleteDetailExpByGroup()
+        // await consumeInsertSelfDevSoundData()
+        // await consumeCreateSelfDevSoundgGroup()
+        // await consumeUpdateSelfDevSoundgGroup()
+        // await deleteSelfDevSoundDataGroup()
+        // await consumeCreateExperiencesGroup()
+        // await consumeUpdateExperiencesGroup()
+        // await consumeDeleteExperiencesGroup()
+        // await consumeCreateExperiencesData()
+        // await consumeUpdateExperiencesData()
+        // await consumeDeleteExperiencesData()
+        // await consumeInsertSelfDevData()
+        // await deleteSelfDevData() 
+        // await deleteSelfDevSoundData()
+        // await consumeInsertSelfDevDataBounce()
+        // await consumeUpdateSelfDevDataBounce()  
+        // await deleteSelfDevDataBounce()
+        // await consumeUpsertGlobalSettingBounce()
+        await consumeDeleteTask2() 
+        await consumeTask2()
 
         console.log('All functions executed successfully in order');
     } catch (error) {

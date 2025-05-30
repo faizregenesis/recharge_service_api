@@ -54,6 +54,7 @@ const consumeInsertSelfDevSoundData = async () => {
                         deleted_at: data.deleted_at, 
                     }, 
                     create: {
+                        id: data.id,
                         self_development_id: data.self_development_id,
                         sound_code: data.sound_code,
                         duration: data.duration,
@@ -68,7 +69,7 @@ const consumeInsertSelfDevSoundData = async () => {
                     }
                 });
 
-                console.log("success to upsert self dev: ", upsertSelfDev);
+                console.log("success to upsert self dev sound: ", upsertSelfDev);
 
                 channel.ack(msg);
             } catch (error: any) {

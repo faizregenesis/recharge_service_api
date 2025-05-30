@@ -34,7 +34,7 @@ const fetchInitialGroupeData = async () => {
             return console.log("GROUP DATA EMPTY AT DATABASE", initialData);
         }
 
-        // console.log("group data from admin url", initialData);
+        console.log("group data from admin url", initialData);
 
         for (const groupData of initialData) {
             const dataGroup = await prisma.group.upsert({
