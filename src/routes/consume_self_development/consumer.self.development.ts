@@ -58,6 +58,7 @@ const consumeInsertSelfDevData = async () => {
                                     is_explore: data.is_explore,
                                     created_date: data.created_date, 
                                     updated_date: data.updated_date, 
+                                    order: data.order, 
                                     deleted_at: data.deleted_at
                                 }
                             })
@@ -76,6 +77,7 @@ const consumeInsertSelfDevData = async () => {
                                     is_explore: data.is_explore,
                                     created_date: data.created_date, 
                                     updated_date: data.updated_date, 
+                                    order: data.order, 
                                     deleted_at: data.deleted_at
                                 }
                             })
@@ -116,19 +118,19 @@ const deleteSelfDevData = async () => {
             if (msg) {
                 try {
                     const messageContent = msg.content.toString();
-                    const data = JSON.parse(messageContent);
-                    // console.log("ini adalah data yang diterima: ", messageContent);
+                    // const data = JSON.parse(messageContent);
+                    console.log("ini adalah data yang diterima: ", messageContent);
 
                     const existSelfDev = await prisma.self_development2.findUnique({
                         where: {
-                            id: `${messageContent}`
+                            id: messageContent.toString()
                         }
                     })
 
                     if (existSelfDev) {
                         const deleteSelfDev = await prisma.self_development2.delete({
                             where: {
-                                id: `${messageContent}`
+                                id: messageContent.toString()
                             }
                         })
                         console.log("\x1b[32m✅ self dev data successfully deleted: \x1b[0m", deleteSelfDev.id);
