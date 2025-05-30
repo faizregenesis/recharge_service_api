@@ -303,7 +303,7 @@ model pod {
   start_deploy          DateTime? 
   serial_number         String?
 
-  // task                  task[]
+  task                  task[]
   experiences2           experiences2[]
   // pod_history           pod_history[]
   // pod_logs              pod_logs[]
@@ -598,4 +598,81 @@ model global_setting2 {
   created_date           DateTime     @default(now()) @db.Timestamptz(6)
   update_date            DateTime     @default(now()) @db.Timestamptz(6)
   deleted_at             DateTime?    @db.Timestamp(6)
+}
+
+model task {
+  id                  String       @id             @default(uuid()) @db.Uuid
+  task_type_id        String?      @db.Uuid
+  pod_id              String?      @db.Uuid
+  created_date        DateTime     @default(now()) @db.Timestamptz(6)
+  update_date         DateTime     @default(now()) @db.Timestamptz(6)
+  deleted_at          DateTime?    @db.Timestamp(6)
+  task_code           String?
+  task_json           Json?
+  template_style      Json? 
+  informations        Json?
+  sound_task_id       Json? 
+  rgb_led             Json? 
+
+  pod                 pod?         @relation(fields: [pod_id], references: [id])
+  task_type           task_type?   @relation(fields: [task_type_id], references: [id])
+
+  igniters            igniter[]    @relation("SoundTaskToIgniter")
+  last_state          last_state[] @relation("SoundTaskToLastState")
+}
+
+model igniter {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String? 
+  fk_task       String?      @db.Uuid
+
+  task    task? @relation(fields: [fk_task], references: [id], name: "SoundTaskToIgniter")
+
+  updated_date  DateTime?    @db.Timestamptz(6)
+  created_date  DateTime?    @db.Timestamptz(6)
+  deleted_at    DateTime?    @db.Timestamp(6)
+}
+
+model last_state {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String? 
+  fk_task String? @db.Uuid
+
+  task    task?  @relation(fields: [fk_task], references: [id], name: "SoundTaskToLastState")
+
+  updated_date  DateTime? @db.Timestamptz(6)
+  created_date  DateTime? @db.Timestamptz(6)
+  deleted_at    DateTime? @db.Timestamp(6)
+}
+
+model task_type {
+  id                    String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                  String?
+  name                  String?
+  small_screen          String?
+  big_screen            String?
+  number_of_input       Int?
+  number_of_output      Int?
+  back                  Boolean?
+  home                  Boolean?
+  settings              Boolean?
+  template_style        Json? 
+  template_tooltips     Json? 
+
+  updated_date          DateTime?    @db.Timestamptz(6)
+  created_date          DateTime?    @db.Timestamptz(6)
+  deleted_at            DateTime?    @db.Timestamp(6)
+
+  task task[]
+}
+
+model tooltips {
+  id                  String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  content             String?
+  detail_id           String?
+  description         String?
+
+  created_date        DateTime     @default(now()) @db.Timestamptz(6)
+  update_date         DateTime     @default(now()) @db.Timestamptz(6)
+  deleted_at          DateTime?    @db.Timestamp(6)
 }
