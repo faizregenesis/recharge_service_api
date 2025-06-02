@@ -369,17 +369,21 @@ const consumePodData = async () => {
 
                     let firmwareVersion = await prisma.firmware_version.findUnique({
                         where: { 
-                            id: data.fk_firmware_version 
+                            id: `${data.firmwareVersionId}`
                         }
                     });
+
+                    // console.log("ini adalah data yang didapat: ", data);
+                    // console.log("firmware version data: ", data.firmware_data);
+                    // console.log("firmwareVersionId: ", data.firmwareVersionId);
 
                     if (!firmwareVersion && data.firmware_data) {
                         firmwareVersion = await prisma.firmware_version.upsert({
                             where: {
-                                id: data.firmware_data.id
+                                id: `${data.firmwareVersionId}`
                             },
                             create: {
-                                id: data.fk_firmware_version,
+                                id: `${data.firmwareVersionId}`,
                                 firmware_id: data.firmware_data.firmware_id,
                                 light_version: data.firmware_data.light_version,
                                 chair_version: data.firmware_data.chair_version,
