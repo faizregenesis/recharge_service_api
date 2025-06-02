@@ -23,6 +23,7 @@ model experiences {
   active                 Boolean                  @default(true)
   mode_id                String?                  @db.Uuid
   pod_id                 String?                  @db.Uuid
+  order_experience       Int?
 
   created_date           DateTime                 @default(now()) @db.Timestamptz(6)
   update_date            DateTime?                @default(now()) @db.Timestamptz(6)
@@ -50,6 +51,8 @@ model detail_experience {
   lamp                            String?
   sound_scape                     Int?
   scent                           String?  
+  order                           Int?
+  order_experience                Int?
 
   created_at                      DateTime    @default(now()) @db.Timestamptz(6)
   updated_at                      DateTime    @default(now()) @db.Timestamptz(6)
@@ -155,6 +158,7 @@ model self_development {
   self_development_name String?
   description           String?
   icon                  String?
+  order                 Int?
 
   created_date          DateTime?      @default(now()) @db.Timestamptz(6)
   updated_date          DateTime?      @default(now()) @db.Timestamptz(6)
@@ -172,6 +176,8 @@ model self_development_sound {
   file_path             String?
   title                 String?
   caption               String?
+  self_dev_order        Int? 
+  order                 Int?
 
   created_date          DateTime?        @default(now()) @db.Timestamptz(6)
   updated_date          DateTime?        @default(now()) @db.Timestamptz(6)
@@ -539,6 +545,7 @@ model self_development_sound2 {
   file_path           String?
   title               String?
   caption             String?
+  self_dev_order      Int? 
   order               Int?
   video               String?
 
