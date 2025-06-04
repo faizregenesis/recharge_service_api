@@ -338,7 +338,7 @@ const deleteSelfDevSoundData = async () => {
         await channel.bindQueue(queue, `${deleteSelfDevSoundDataExchange}`, '');
         channel.prefetch(1);
 
-        console.log(`\x1b[32mPod is waiting for messages on queue (delete self def sound data): ${queue}\x1b[0m`);
+        console.log(`\x1b[32mService is waiting for messages on queue (delete self def sound data): ${queue}\x1b[0m`);
 
         channel.consume(queue, async (msg) => {
             if (!msg) return;
@@ -388,7 +388,7 @@ const deleteSelfDevSoundDataGroup = async () => {
         await channel.bindQueue(queue, `${deleteSelfDevSoundGroupExchangeName}`, '');
         channel.prefetch(1);
 
-        console.log(`\x1b[32mPod is waiting for messages on queue (delete self def sound data bounce): ${queue}\x1b[0m`);
+        console.log(`\x1b[32mService is waiting for messages on queue (delete self def sound data bounce): ${queue}\x1b[0m`);
 
         channel.consume(queue, async (msg) => {
             if (!msg) return;

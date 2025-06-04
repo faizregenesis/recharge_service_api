@@ -80,6 +80,11 @@ import {
     fetchInitialTask
 } from './routes/consume_task/consumer.task2.setting'
 
+import {
+    consumeNodeData, 
+    consumeNodeDataGroup
+} from './routes/consume_node/consumer.node'
+
 const runFetchFunctionsInOrder = async () => {
     console.log("🔄 Starting data synchronization...");
 
@@ -94,40 +99,42 @@ const runFetchFunctionsInOrder = async () => {
 
 const runFunctionsInOrder = async () => {
     try {
-        await consumeUserData()
-        await consumePodData()
-        await consumeDeletePodData()
-        await consumeUsersDataUpdate()
-        await consumeResetPassword()
-        await syncDisclaimerData()
-        await consumeUpdateQuestionMatrix()
-        await consumeInsertQuestionMatrix() 
-        await consumeGroupData()
-        await consumeCreatePodSetting()
-        await consumeUpdatePodSetting()
-        await consumeDeletePodSetting()
-        await consumeUpdatePodSettingGroup()
-        await consumeCreatePodSettingGroup()
-        await consumeDeleteDetailExpByGroup()
-        await consumeInsertSelfDevSoundData()
-        await consumeCreateSelfDevSoundgGroup()
-        await consumeUpdateSelfDevSoundgGroup()
-        await deleteSelfDevSoundDataGroup()
-        await consumeCreateExperiencesGroup()
-        await consumeUpdateExperiencesGroup()
-        await consumeDeleteExperiencesGroup()
-        await consumeCreateExperiencesData()
-        await consumeUpdateExperiencesData()
-        await consumeDeleteExperiencesData()
-        await consumeInsertSelfDevData()
-        await deleteSelfDevData() 
-        await deleteSelfDevSoundData()
-        await consumeInsertSelfDevDataBounce()
-        await consumeUpdateSelfDevDataBounce()  
-        await deleteSelfDevDataBounce()
-        await consumeUpsertGlobalSettingBounce()
+        // await consumeUserData()
+        // await consumePodData()
+        // await consumeDeletePodData()
+        // await consumeUsersDataUpdate()
+        // await consumeResetPassword()
+        // await syncDisclaimerData()
+        // await consumeUpdateQuestionMatrix()
+        // await consumeInsertQuestionMatrix() 
+        // await consumeGroupData()
+        // await consumeCreatePodSetting()
+        // await consumeUpdatePodSetting()
+        // await consumeDeletePodSetting()
+        // await consumeUpdatePodSettingGroup()
+        // await consumeCreatePodSettingGroup()
+        // await consumeDeleteDetailExpByGroup()
+        // await consumeInsertSelfDevSoundData()
+        // await consumeCreateSelfDevSoundgGroup()
+        // await consumeUpdateSelfDevSoundgGroup()
+        // await deleteSelfDevSoundDataGroup()
+        // await consumeCreateExperiencesGroup()
+        // await consumeUpdateExperiencesGroup()
+        // await consumeDeleteExperiencesGroup()
+        // await consumeCreateExperiencesData()
+        // await consumeUpdateExperiencesData()
+        // await consumeDeleteExperiencesData()
+        // await consumeInsertSelfDevData()
+        // await deleteSelfDevData() 
+        // await deleteSelfDevSoundData()
+        // await consumeInsertSelfDevDataBounce()
+        // await consumeUpdateSelfDevDataBounce()  
+        // await deleteSelfDevDataBounce()
+        // await consumeUpsertGlobalSettingBounce()
         await consumeDeleteTask2() 
         await consumeTask2()
+        await consumeNodeData()
+        await consumeNodeDataGroup()
 
         console.log('All functions executed successfully in order');
     } catch (error) {

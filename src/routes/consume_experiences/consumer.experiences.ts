@@ -20,7 +20,7 @@ const consumeCreateExperiencesData = async () => {
         await channel.bindQueue(queue, createExperienceData, '');
         channel.prefetch(1);
 
-        console.log(`\x1b[32mPod is waiting for messages on queue (synch create experiences data): ${queue}\x1b[0m`);
+        console.log(`\x1b[32mService is waiting for messages on queue (synch create experiences data): ${queue}\x1b[0m`);
 
         channel.consume(queue, async (msg) => {
             if (msg) {
@@ -89,7 +89,7 @@ const consumeUpdateExperiencesData = async () => {
         await channel.bindQueue(queue, updateExperienceData, '');
         channel.prefetch(1);
 
-        console.log(`\x1b[32mPod is waiting for messages on queue (synch update experiences data): ${queue}\x1b[0m`);
+        console.log(`\x1b[32mService is waiting for messages on queue (synch update experiences data): ${queue}\x1b[0m`);
 
         channel.consume(queue, async (msg) => {
             if (msg) {
@@ -157,7 +157,7 @@ const consumeDeleteExperiencesData = async () => {
         await channel.bindQueue(queue, deleteExperienceData, '');
         channel.prefetch(1);
 
-        console.log(`\x1b[32mPod is waiting for messages on queue (synch delete experiences data): ${queue}\x1b[0m`);
+        console.log(`\x1b[32mService is waiting for messages on queue (synch delete experiences data): ${queue}\x1b[0m`);
 
         channel.consume(queue, async (msg) => {
             if (msg) {

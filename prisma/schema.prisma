@@ -310,12 +310,13 @@ model pod {
   serial_number         String?
 
   task                  task[]
-  experiences2           experiences2[]
+  experiences2          experiences2[]
+  node                  node[]
   // pod_history           pod_history[]
   // pod_logs              pod_logs[]
   // template_properties   template_properties[]
-  self_development2      self_development2[]
-  global_setting         global_setting2[]
+  self_development2     self_development2[]
+  global_setting        global_setting2[]
 
   customer              customer?              @relation(fields: [fk_customer], references: [id])
   app_version           app_version?           @relation(fields: [fk_app_version], references: [id])
@@ -682,4 +683,69 @@ model tooltips {
   created_date        DateTime     @default(now()) @db.Timestamptz(6)
   update_date         DateTime     @default(now()) @db.Timestamptz(6)
   deleted_at          DateTime?    @db.Timestamp(6)
+}
+
+model node {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code           String?    @unique
+  label          String?
+  type           String?
+  position_x     Int?
+  position_y     Int?
+  inputs         String?
+  pod_id         String?     @db.Uuid
+  pob_state      Boolean?    @default(false)
+  template_style Json? 
+
+  nodes_output   nodes_output[]
+  node_button    node_button[]
+  connections    connections[]
+  pod            pod?         @relation(fields: [pod_id], references: [id])
+
+  updated_date   DateTime? @db.Timestamptz(6)
+  created_date   DateTime? @db.Timestamptz(6)
+  deleted_at     DateTime? @db.Timestamp(6)
+}
+
+model node_button {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  button_code   String?   @unique
+  name          String? 
+  output_number String? 
+  fk_node_id    String?   @db.Uuid
+
+  node          node?     @relation(fields: [fk_node_id], references: [id])
+
+  updated_date  DateTime? @db.Timestamptz(6)
+  created_date  DateTime? @db.Timestamptz(6)
+  deleted_at    DateTime? @db.Timestamp(6)
+}
+
+model nodes_output {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nodes_code    String?   @unique
+  side          String?
+  class         String?
+  fk_node_id    String?   @db.Uuid
+  output_code   String? 
+
+  node          node?     @relation(fields: [fk_node_id], references: [id])
+
+  updated_date  DateTime? @db.Timestamptz(6)
+  created_date  DateTime? @db.Timestamptz(6)
+  deleted_at    DateTime? @db.Timestamp(6)
+}
+
+model connections {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  from          String?
+  to            String?
+  code          String?   @unique
+  fk_node_id    String?   @db.Uuid
+
+  node          node?     @relation(fields: [fk_node_id], references: [id])
+
+  updated_date  DateTime? @db.Timestamptz(6)
+  created_date  DateTime? @db.Timestamptz(6)
+  deleted_at    DateTime? @db.Timestamp(6)
 }
