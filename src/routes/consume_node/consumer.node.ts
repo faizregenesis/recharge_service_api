@@ -12,6 +12,8 @@ import {
 const createNodeData  = `${process.env.CREATE_NODE_DATA}`;
 const createNodeByGroup  = `${process.env.CREATE_NODE_BY_GROUP}`;
 const connectionUrl       = `${process.env.RABBITMQ_URL}`;
+const deleteNodeByGroup  = `${process.env.DELETE_NODE_BY_GROUP}`;
+const deleteNodeData  = `${process.env.DELETE_NODE_DATA}`;
 
 const consumeNodeData = async () => {
     try {
@@ -368,7 +370,154 @@ const consumeNodeDataGroup = async () => {
     }
 };
 
+const consumeDeleteNodeData = async () => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(`${deleteNodeData}`, 'fanout', { durable: true });
+
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, `${deleteNodeData}`, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mService is waiting for messages on queue (sync delete node data by group): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (!msg) return;
+
+            try {
+                const messageContent = msg.content.toString();
+                const data = JSON.parse(messageContent);
+
+                const nodeIds = data.nodeIds
+                console.log("node ids: ", nodeIds);
+
+                await prisma.connections.deleteMany({
+                    where: { 
+                        fk_node_id: { 
+                            in: nodeIds 
+                        } 
+                    }
+                });
+
+                await prisma.node_button.deleteMany({
+                    where: { 
+                        fk_node_id: { 
+                            in: nodeIds 
+                        } 
+                    }
+                });
+
+                await prisma.nodes_output.deleteMany({
+                    where: { 
+                        fk_node_id: { 
+                            in: nodeIds 
+                        } 
+                    }
+                });
+
+                await prisma.node.deleteMany({
+                    where: { 
+                        id: { 
+                            in: nodeIds 
+                        } 
+                    }
+                });
+
+                channel.ack(msg);
+            } catch (error: any) {
+                console.error('\x1b[31mError processing message:', error.message, '\x1b[0m');
+
+                try {
+                    channel.nack(msg, false, true);
+                } catch (nackErr) {
+                    console.error("❌ Failed to nack message:", nackErr);
+                }
+            }
+        });
+
+    } catch (error: any) {
+        console.error('\x1b[31mError initializing consumer:', error.message, '\x1b[0m');
+    }
+};
+
+const consumeDeleteNodeDataGroup = async () => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(`${deleteNodeByGroup}`, 'fanout', { durable: true });
+
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, `${deleteNodeByGroup}`, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mService is waiting for messages on queue (sync delete node data by group): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (!msg) return;
+
+            try {
+                const messageContent = msg.content.toString();
+                const data = JSON.parse(messageContent);
+
+                // console.log("delete node by group", data);
+                const nodeIds = data.nodeIds
+                console.log("node ids: ", nodeIds);
+
+                await prisma.connections.deleteMany({
+                    where: { 
+                        fk_node_id: { 
+                            in: nodeIds 
+                        } 
+                    }
+                });
+
+                await prisma.node_button.deleteMany({
+                    where: { 
+                        fk_node_id: { 
+                            in: nodeIds 
+                        } 
+                    }
+                });
+
+                await prisma.nodes_output.deleteMany({
+                    where: { 
+                        fk_node_id: { 
+                            in: nodeIds 
+                        } 
+                    }
+                });
+
+                await prisma.node.deleteMany({
+                    where: { 
+                        id: { 
+                            in: nodeIds 
+                        } 
+                    }
+                });
+
+                channel.ack(msg);
+            } catch (error: any) {
+                console.error('\x1b[31mError processing message:', error.message, '\x1b[0m');
+
+                try {
+                    channel.nack(msg, false, true);
+                } catch (nackErr) {
+                    console.error("❌ Failed to nack message:", nackErr);
+                }
+            }
+        });
+
+    } catch (error: any) {
+        console.error('\x1b[31mError initializing consumer:', error.message, '\x1b[0m');
+    }
+};
+
 export {
     consumeNodeData, 
-    consumeNodeDataGroup
+    consumeNodeDataGroup,
+    consumeDeleteNodeData,  
+    consumeDeleteNodeDataGroup
 }

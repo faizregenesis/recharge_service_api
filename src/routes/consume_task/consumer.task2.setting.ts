@@ -2,8 +2,8 @@ import amqp from 'amqplib';
 import dotenv from  "dotenv"
 import prisma from '../../../prisma/prisma';
 import { loginToAdmin } from "../../login.to.admin";
-dotenv.config(); 
 import axios from "axios"; 
+dotenv.config(); 
 
 const createExchangeName  = process.env.CREATE_TASK2_EXCHANGE;
 const deleteExchangeName  = `${process.env.DELETE_TASK2_EXCHANGE}`;
@@ -107,7 +107,7 @@ const consumeTask2 = async () => {
                 const messageContent = msg.content.toString();
                 const data = JSON.parse(messageContent);
 
-                console.log("ini adalah data add task yang didapat dari admin: ", data);
+                // console.log("ini adalah data add task yang didapat dari admin: ", data);
 
                 const existPodId = await prisma.pod.findUnique({
                     where: { id: data.pod_id }
