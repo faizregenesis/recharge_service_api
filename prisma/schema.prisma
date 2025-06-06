@@ -749,3 +749,13 @@ model connections {
   created_date  DateTime? @db.Timestamptz(6)
   deleted_at    DateTime? @db.Timestamp(6)
 }
+
+model imageData {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  imageurl      String? 
+  imageName     String?   @unique
+
+  updated_date  DateTime? @db.Timestamptz(6)
+  created_date  DateTime? @db.Timestamptz(6)
+  deleted_at    DateTime? @db.Timestamp(6)
+}

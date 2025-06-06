@@ -41,7 +41,6 @@ const consumeNodeData = async () => {
                 const nodes_output = data.nodes_output
                 const connections = data.connections
                 const node_buttons = data.node_buttons
-                const group_ids = data.group_ids
 
                 const nodeOutputFormat = nodes_output.map((output: any) => ({
                     id: output.id,
@@ -235,7 +234,7 @@ const consumeNodeDataGroup = async () => {
                 });
 
                 const matchPodIds = matchPodByGroup.map(pod => pod.id);
-                console.log("match pos id:", matchPodIds);
+                // console.log("match pos id at node data:", matchPodIds);
 
                 // insert node data
                 const insertedNodes = [];
@@ -298,7 +297,7 @@ const consumeNodeDataGroup = async () => {
                         skipDuplicates: true
                     });
                     connectionDataList.push(...formatData);
-                    console.log("connection created: ", createData);
+                    // console.log("connection created: ", createData);
                 }
 
                 const nodeButtonList = [];
@@ -318,7 +317,7 @@ const consumeNodeDataGroup = async () => {
                         skipDuplicates: true
                     });
                     nodeButtonList.push(...formatData);
-                    console.log("node button created: ", createData);
+                    // console.log("node button created: ", createData);
                 }
 
                 const nodeOutputList = [];
@@ -340,7 +339,7 @@ const consumeNodeDataGroup = async () => {
                         skipDuplicates: true
                     });
                     nodeOutputList.push(...formatData);
-                    console.log("node output created: ", createData);
+                    // console.log("node output created: ", createData);
                 }
 
                 const message = {
@@ -391,7 +390,7 @@ const consumeDeleteNodeData = async () => {
                 const data = JSON.parse(messageContent);
 
                 const nodeIds = data.nodeIds
-                console.log("node ids: ", nodeIds);
+                // console.log("node ids: ", nodeIds);
 
                 await prisma.connections.deleteMany({
                     where: { 
@@ -464,7 +463,7 @@ const consumeDeleteNodeDataGroup = async () => {
 
                 // console.log("delete node by group", data);
                 const nodeIds = data.nodeIds
-                console.log("node ids: ", nodeIds);
+                // console.log("node ids: ", nodeIds);
 
                 await prisma.connections.deleteMany({
                     where: { 
