@@ -421,6 +421,8 @@ const consumeNodeDataGroup = async () => {
                 const newNodeButtons = await insertNodeButtons(nodeIds, node_buttons);
                 const newNodesOutput = await insertNodesOutput(nodeIds, nodes_output);
 
+                console.log("ini adalah data koneksi: ", newConnections);
+
                 const resultMessage = {
                     group_ids,
                     upsertNodeData: insertedNodes,
