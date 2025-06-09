@@ -557,7 +557,6 @@ model self_development_sound2 {
   deleted_at            DateTime?        @db.Timestamp(6)
 }
 
-
 model global_setting2 {
   id                     String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   pod_id                 String?      @db.Uuid
@@ -644,9 +643,9 @@ model igniter {
 model last_state {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code          String? 
-  fk_task String? @db.Uuid
+  fk_task       String? @db.Uuid
 
-  task    task?  @relation(fields: [fk_task], references: [id], name: "SoundTaskToLastState")
+  task          task?  @relation(fields: [fk_task], references: [id], name: "SoundTaskToLastState")
 
   updated_date  DateTime? @db.Timestamptz(6)
   created_date  DateTime? @db.Timestamptz(6)

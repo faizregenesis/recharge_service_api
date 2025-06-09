@@ -135,13 +135,15 @@ const runFunctionsInOrder = async () => {
         // await consumeUpdateSelfDevDataBounce()  
         // await deleteSelfDevDataBounce()
         // await consumeUpsertGlobalSettingBounce()
-        await consumeDeleteTask2()
-        await consumeDeleteTask2ByGroup()
-        await consumeDeleteNodeData()
-        await consumeDeleteNodeDataGroup() 
-        await consumeTask2()
-        await consumeNodeData()
+        // await consumeDeleteTask2()
+        // await consumeDeleteNodeData()
+        // await consumeTask2()
+        // await consumeNodeData()
+
+        // ruwet ne adohhh 
+        await consumeDeleteNodeDataGroup()
         await consumeNodeDataGroup()
+        await consumeDeleteTask2ByGroup()
         await consumeTask2ByGroup()
 
         console.log('All functions executed successfully in order');

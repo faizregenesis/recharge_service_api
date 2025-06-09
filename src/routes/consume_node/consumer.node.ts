@@ -4,10 +4,21 @@ import prisma from '../../../prisma/prisma';
 import { loginToAdmin } from "../../login.to.admin";
 import axios from "axios"; 
 import { v4 as uuidv4 } from 'uuid';
+import { randomBytes } from 'crypto';
 dotenv.config(); 
 import { 
-    bounceNodeDataToAdmin 
+    bounceNodeDataToAdmin, 
+    bounceDeleteNodeDataToAdmin
 } from "./publish.to..queue";
+import { 
+    insertConnections,
+    insertNodeButtons,
+    insertNodesOutput
+} from "./nodeDataService";
+
+const generateRandomString = (length = 6) => {
+    return randomBytes(length).toString('hex').slice(0, length);
+};
 
 const createNodeData  = `${process.env.CREATE_NODE_DATA}`;
 const createNodeByGroup  = `${process.env.CREATE_NODE_BY_GROUP}`;
@@ -197,178 +208,6 @@ const consumeNodeData = async () => {
     }
 };
 
-const consumeNodeDataGroup = async () => {
-    try {
-        const connection = await amqp.connect(`${connectionUrl}`);
-        const channel = await connection.createChannel();
-
-        await channel.assertExchange(`${createNodeByGroup}`, 'fanout', { durable: true });
-
-        const { queue } = await channel.assertQueue('', { exclusive: true });
-        await channel.bindQueue(queue, `${createNodeByGroup}`, '');
-        channel.prefetch(1);
-
-        console.log(`\x1b[32mService is waiting for messages on queue (sync add node data by group): ${queue}\x1b[0m`);
-
-        channel.consume(queue, async (msg) => {
-            if (!msg) return;
-
-            try {
-                const messageContent = msg.content.toString();
-                const data = JSON.parse(messageContent);
-
-                // console.log("ini adalah data add node yang didapat dari admin: ", data);
-
-                const group_ids = data.group_ids
-                const node = data.node
-                const connections = data.connections
-                const node_buttons = data.node_buttons
-                const nodes_output = data.nodes_output
-
-                const matchPodByGroup = await prisma.pod.findMany({
-                    where: {
-                        fk_group_id: {
-                            in: group_ids
-                        }
-                    }
-                });
-
-                const matchPodIds = matchPodByGroup.map(pod => pod.id);
-                // console.log("match pos id at node data:", matchPodIds);
-
-                // insert node data
-                const insertedNodes = [];
-                for (const podId of matchPodIds) {
-                    const uniqueNodeCode = `${node.code}_${podId}`;
-                    const nodeResult = await prisma.node.upsert({
-                        where: {
-                            code: uniqueNodeCode,
-                            label: node.label,
-                        },  
-                        create: {
-                            code: uniqueNodeCode,
-                            label: node.label,
-                            type: node.type,
-                            position_x: node.position_x,
-                            position_y: node.position_y,
-                            inputs: node.inputs,
-                            pod_id: podId,
-                            pob_state: node.pob_state,
-                            template_style: node.template_style,
-                            updated_date: node.updated_date,
-                            created_date: node.created_date,
-                            deleted_at: node.deleted_at
-                        }, 
-                        update: {
-                            code: uniqueNodeCode,
-                            label: node.label,
-                            type: node.type,
-                            position_x: node.position_x,
-                            position_y: node.position_y,
-                            inputs: node.inputs,
-                            pod_id: podId,
-                            pob_state: node.pob_state,
-                            template_style: node.template_style,
-                            updated_date: node.updated_date,
-                            created_date: node.created_date,
-                            deleted_at: node.deleted_at
-                        } 
-                    });
-
-                    insertedNodes.push(nodeResult);
-                }
-                const nodeId = insertedNodes.map(id => id.id)
-
-                const connectionDataList = [];
-                for (const nodeIdItem of nodeId) {
-                    const formatData = connections.map((data: any) => ({
-                        id: uuidv4(),
-                        from: data.from,
-                        to: data.to,
-                        code: `${data.code}_${nodeIdItem}`,
-                        fk_node_id: nodeIdItem,
-                        updated_date: data.updated_date,
-                        created_date: data.created_date,
-                        deleted_at: data.deleted_at
-                    }));
-
-                    const createData = await prisma.connections.createMany({
-                        data: formatData, 
-                        skipDuplicates: true
-                    });
-                    connectionDataList.push(...formatData);
-                    // console.log("connection created: ", createData);
-                }
-
-                const nodeButtonList = [];
-                for (const nodeIdItem of nodeId) {
-                    const formatData = node_buttons.map((data: any) => ({
-                        id: uuidv4(),
-                        button_code: `${data.button_code}_${nodeIdItem}`,
-                        name: data.name,
-                        output_number: data.output_number,
-                        fk_node_id: nodeIdItem,
-                        updated_date: data.updated_date,
-                        created_date: data.created_date,
-                    }));
-
-                    const createData = await prisma.node_button.createMany({
-                        data: formatData, 
-                        skipDuplicates: true
-                    });
-                    nodeButtonList.push(...formatData);
-                    // console.log("node button created: ", createData);
-                }
-
-                const nodeOutputList = [];
-                for (const nodeIdItem of nodeId) {
-                    const formatData = nodes_output.map((data: any) => ({
-                        id: uuidv4(),
-                        nodes_code: `${data.nodes_code}_${nodeIdItem}`,
-                        side: data.side,
-                        class: data.class,
-                        fk_node_id: nodeIdItem,
-                        output_code: data.output_code,
-                        updated_date: data.updated_date,
-                        created_date: data.created_date, 
-                        deleted_at: data.deleted_at
-                    }));
-
-                    const createData = await prisma.nodes_output.createMany({
-                        data: formatData, 
-                        skipDuplicates: true
-                    });
-                    nodeOutputList.push(...formatData);
-                    // console.log("node output created: ", createData);
-                }
-
-                const message = {
-                    group_ids: group_ids, 
-                    upsertNodeData: insertedNodes, 
-                    newConnections: connectionDataList,
-                    newNodeButtons: nodeButtonList,
-                    newNodesOutput: nodeOutputList,
-                }
-
-                await bounceNodeDataToAdmin(message)
-
-                channel.ack(msg);
-            } catch (error: any) {
-                console.error('\x1b[31mError processing message:', error.message, '\x1b[0m');
-
-                try {
-                    channel.nack(msg, false, true);
-                } catch (nackErr) {
-                    console.error("❌ Failed to nack message:", nackErr);
-                }
-            }
-        });
-
-    } catch (error: any) {
-        console.error('\x1b[31mError initializing consumer:', error.message, '\x1b[0m');
-    }
-};
-
 const consumeDeleteNodeData = async () => {
     try {
         const connection = await amqp.connect(`${connectionUrl}`);
@@ -452,7 +291,7 @@ const consumeDeleteNodeDataGroup = async () => {
         await channel.bindQueue(queue, `${deleteNodeByGroup}`, '');
         channel.prefetch(1);
 
-        console.log(`\x1b[32mService is waiting for messages on queue (sync delete node data by group): ${queue}\x1b[0m`);
+        console.log(`\x1b[32mService is waiting for messages on queue (delete node data by group): ${queue}\x1b[0m`);
 
         channel.consume(queue, async (msg) => {
             if (!msg) return;
@@ -460,10 +299,25 @@ const consumeDeleteNodeDataGroup = async () => {
             try {
                 const messageContent = msg.content.toString();
                 const data = JSON.parse(messageContent);
+                const group_ids = data.group_ids
+                const matchingPodData = await prisma.pod.findMany({
+                    where: {
+                        fk_group_id: {in: group_ids}
+                    }
+                })
+                const matchPodId = matchingPodData.map(id => id.id)
 
-                // console.log("delete node by group", data);
-                const nodeIds = data.nodeIds
-                // console.log("node ids: ", nodeIds);
+                const nodeData = await prisma.node.findMany({
+                    where: {
+                        pod_id: {in: matchPodId}
+                    }
+                })
+                const nodeIds = nodeData.map(id => id.id)
+                const message = {
+                    nodeIds: nodeIds
+                }
+
+                await bounceDeleteNodeDataToAdmin(message)
 
                 await prisma.connections.deleteMany({
                     where: { 
@@ -496,11 +350,95 @@ const consumeDeleteNodeDataGroup = async () => {
                         } 
                     }
                 });
+                console.log("node data deleted by group", nodeIds.length);
 
                 channel.ack(msg);
             } catch (error: any) {
                 console.error('\x1b[31mError processing message:', error.message, '\x1b[0m');
 
+                try {
+                    channel.nack(msg, false, true);
+                } catch (nackErr) {
+                    console.error("❌ Failed to nack message:", nackErr);
+                }
+            }
+        });
+
+    } catch (error: any) {
+        console.error('\x1b[31mError initializing consumer:', error.message, '\x1b[0m');
+    }
+};
+
+const consumeNodeDataGroup = async () => {
+    try {
+        const connection = await amqp.connect(connectionUrl);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(createNodeByGroup, 'fanout', { durable: true });
+
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, createNodeByGroup, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mService is waiting for messages on queue (sync add node data by group): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (!msg) return;
+
+            try {
+                const { group_ids, node, connections, node_buttons, nodes_output } = JSON.parse(msg.content.toString());
+
+                const matchedPods = await prisma.pod.findMany({
+                    where: { fk_group_id: { in: group_ids } }
+                });
+
+                const podIds = matchedPods.map(p => p.id);
+                const insertedNodes: any[] = [];
+
+                for (const podId of podIds) {
+                    const createdNode = await prisma.node.create({
+                        data: {
+                            code: generateRandomString(),
+                            label: node.label,
+                            type: node.type,
+                            position_x: node.position_x,
+                            position_y: node.position_y,
+                            inputs: node.inputs,
+                            pod_id: podId,
+                            pob_state: node.pob_state,
+                            template_style: node.template_style,
+                            updated_date: node.updated_date,
+                            created_date: node.created_date,
+                            deleted_at: node.deleted_at
+                        }
+                    });
+                    insertedNodes.push(createdNode);
+                }
+
+                const nodeIds = insertedNodes.map(n => n.id);
+
+                const newConnections = await insertConnections(nodeIds, connections);
+                const newNodeButtons = await insertNodeButtons(nodeIds, node_buttons);
+                const newNodesOutput = await insertNodesOutput(nodeIds, nodes_output);
+
+                const resultMessage = {
+                    group_ids,
+                    upsertNodeData: insertedNodes,
+                    newConnections,
+                    newNodeButtons,
+                    newNodesOutput
+                };
+
+                try {
+                    await bounceNodeDataToAdmin(resultMessage);
+                } catch (err: any) {
+                    console.warn("⚠️ Failed to bounce data to admin, but ack will continue:", err.message);
+                }
+
+                channel.ack(msg);
+
+            } catch (error: any) {
+                console.error('\x1b[31mError processing message:', error.message, '\x1b[0m');
                 try {
                     channel.nack(msg, false, true);
                 } catch (nackErr) {

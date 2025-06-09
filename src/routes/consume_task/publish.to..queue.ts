@@ -3,10 +3,10 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const connectionUrl = process.env.RABBITMQ_URL;
-const bounceNodeData  = `${process.env.BOUNCE_NODE_DATA}`;
-const bounceDeleteNodeData  = `${process.env.BOUNCE_DELETE_NODE_DATA}`;
+const bounceNodeData  = `${process.env.BOUNCE_TASK_DATA}`;
+const bounceDeleteNodeData  = `${process.env.BOUNCE_DELETE_TASK_DATA}`;
 
-const bounceNodeDataToAdmin = async (message: any) => {
+const bounceTaskDataToAdmin = async (message: any) => {
     try {
         const connection = await amqp.connect(`${connectionUrl}`);
         const channel = await connection.createChannel();
@@ -15,7 +15,7 @@ const bounceNodeDataToAdmin = async (message: any) => {
 
         const messageString = typeof message === 'string' ? message : JSON.stringify(message);
         channel.publish(bounceNodeData, '', Buffer.from(messageString));
-        console.log(`Create mode data spread to pods and admin bounce: ${message}`);
+        console.log(`Create task data spread to pods and admin bounce: ${message}`);
 
         await channel.close();
         await connection.close();
@@ -24,7 +24,7 @@ const bounceNodeDataToAdmin = async (message: any) => {
     }
 };
 
-const bounceDeleteNodeDataToAdmin = async (message: any) => {
+const bounceDeleteTaskDataToAdmin = async (message: any) => {
     try {
         const connection = await amqp.connect(`${connectionUrl}`);
         const channel = await connection.createChannel();
@@ -33,7 +33,7 @@ const bounceDeleteNodeDataToAdmin = async (message: any) => {
 
         const messageString = typeof message === 'string' ? message : JSON.stringify(message);
         channel.publish(bounceDeleteNodeData, '', Buffer.from(messageString));
-        console.log(`Delete node data spread to pods and admin bounce: ${message}`);
+        console.log(`Delete task data spread to pods and admin bounce: ${message}`);
 
         await channel.close();
         await connection.close();
@@ -43,6 +43,6 @@ const bounceDeleteNodeDataToAdmin = async (message: any) => {
 };
 
 export {
-    bounceNodeDataToAdmin,
-    bounceDeleteNodeDataToAdmin 
+    bounceTaskDataToAdmin, 
+    bounceDeleteTaskDataToAdmin
 };
