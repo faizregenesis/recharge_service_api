@@ -686,7 +686,7 @@ model tooltips {
 
 model node {
   id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code           String?    @unique
+  code           String?
   label          String?
   type           String?
   position_x     Int?
@@ -708,7 +708,7 @@ model node {
 
 model node_button {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  button_code   String?   @unique
+  button_code   String?
   name          String? 
   output_number String? 
   fk_node_id    String?   @db.Uuid
@@ -722,7 +722,7 @@ model node_button {
 
 model nodes_output {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nodes_code    String?   @unique
+  nodes_code    String?
   side          String?
   class         String?
   fk_node_id    String?   @db.Uuid
@@ -739,7 +739,7 @@ model connections {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   from          String?
   to            String?
-  code          String?   @unique
+  code          String?
   fk_node_id    String?   @db.Uuid
 
   node          node?     @relation(fields: [fk_node_id], references: [id])

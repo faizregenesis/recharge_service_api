@@ -5,12 +5,10 @@ import { loginToAdmin } from "../../login.to.admin";
 import axios from "axios"; 
 dotenv.config(); 
 import { 
-    bounceTaskDataToAdmin, 
     bounceDeleteTaskDataToAdmin
 } from "./publish.to..queue";
 
 const createExchangeName         = process.env.CREATE_TASK2_EXCHANGE;
-const createExchangeGroup        = process.env.CREATE_TASK2_EXCHANGE_GROUP;
 const deleteExchangeName         = `${process.env.DELETE_TASK2_EXCHANGE}`;
 const deleteExchangeNameByGroup  = `${process.env.DELETE_TASK2_EXCHANGE_BY_GROUP}`;
 const connectionUrl              = `${process.env.RABBITMQ_URL}`;
@@ -141,13 +139,13 @@ const consumeDeleteTask2ByGroup = async () => {
 
                 await bounceDeleteTaskDataToAdmin(message)
 
-                await prisma.igniter.deleteMany({
+                const deleteIgniter = await prisma.igniter.deleteMany({
                     where: {
                         fk_task: {in: matchTaskId}
                     }
                 });
 
-                await prisma.last_state.deleteMany({
+                const deleteLastState = await prisma.last_state.deleteMany({
                     where: {
                         fk_task: {
                             in: matchTaskId
@@ -155,13 +153,19 @@ const consumeDeleteTask2ByGroup = async () => {
                     }
                 });
 
-                await prisma.task.deleteMany({
+                const deleteTask = await prisma.task.deleteMany({
                     where: { 
                         pod_id: {in: matchPodId} 
                     },
                 });
 
-                console.log("task data delete by group: ", matchTaskId.length);
+                const logDelete = {
+                    deleteIgniter: deleteIgniter, 
+                    deleteLastState: deleteLastState, 
+                    deleteTask: deleteTask
+                }
+
+                console.log("task data deleted by group: ", logDelete);
 
                 channel.ack(msg);
                 alreadyHandled = true;
@@ -264,106 +268,6 @@ const consumeTask2 = async () => {
 
                 try {
                     channel.nack(msg, false, true); // Requeue jika terjadi error
-                } catch (nackErr) {
-                    console.error("❌ Failed to nack message:", nackErr);
-                }
-            }
-        });
-
-    } catch (error: any) {
-        console.error('\x1b[31mError initializing consumer:', error.message, '\x1b[0m');
-    }
-};
-
-const consumeTask2ByGroup = async () => {
-    try {
-        const connection = await amqp.connect(`${connectionUrl}`);
-        const channel = await connection.createChannel();
-        await channel.assertExchange(`${createExchangeGroup}`, 'fanout', { durable: true });
-
-        const { queue } = await channel.assertQueue('', { exclusive: true });
-        await channel.bindQueue(queue, `${createExchangeGroup}`, '');
-        channel.prefetch(1);
-
-        console.log(`\x1b[32mService is waiting for messages on queue (sync add task2 by group): ${queue}\x1b[0m`);
-
-        channel.consume(queue, async (msg) => {
-            if (!msg) return;
-
-            try {
-                const messageContent = msg.content.toString();
-                const data = JSON.parse(messageContent);
-
-                const group_ids = data.group_ids
-                const taskData = data.data 
-                const igniters = data.igniters 
-                const last_state = data.last_state
-
-                const getMatchPodData = await prisma.pod.findMany({
-                    where: {
-                        fk_group_id: {in: group_ids}
-                    }
-                })
-                const matchPodId = getMatchPodData.map(id => id.id)
-                // console.log("pod id length: ", matchPodId.length);
-
-                const allInsertedData = [];
-                for (const podId of matchPodId) {
-                    try {
-                        const result = await prisma.$transaction(async (tx) => {
-                            const taskResult = await tx.task.create({
-                                data: {
-                                    task_type_id: taskData.task_type_id,
-                                    pod_id: podId,
-                                    created_date: taskData.created_date,
-                                    update_date: taskData.update_date,
-                                    deleted_at: taskData.deleted_at,
-                                    task_code: taskData.task_code,
-                                    task_json: taskData.task_json,
-                                }
-                            });
-
-                            const igniterResult = await tx.igniter.create({
-                                data: {
-                                    code: igniters[0],
-                                    fk_task: taskResult.id,
-                                }
-                            });
-
-                            const lastStateResult = await tx.last_state.create({
-                                data: {
-                                    code: last_state[0],
-                                    fk_task: taskResult.id,
-                                }
-                            });
-
-                            return {
-                                podId,
-                                taskResult: { ...taskResult },
-                                igniterResult: { ...igniterResult },
-                                lastStateResult: { ...lastStateResult },
-                            };
-                        });
-
-                        allInsertedData.push(result);
-                    } catch (error) {
-                        console.error(`failed to insert task data ${podId}:`, error);
-                    }
-                }
-
-                const message = {
-                    data: allInsertedData
-                };
-                // console.log("message", JSON.stringify(message, null, 2));
-
-                await bounceTaskDataToAdmin(message);
-                // await bounceTaskDataToAdmin(JSON.stringify(message, null, 2));
-
-                channel.ack(msg);
-            } catch (error: any) {
-                    console.error('\x1b[31mError processing message:', error.message, '\x1b[0m');
-                try {
-                    channel.nack(msg, false, true);
                 } catch (nackErr) {
                     console.error("❌ Failed to nack message:", nackErr);
                 }
@@ -564,5 +468,4 @@ export {
     consumeTask2,
     fetchInitialTaskType, 
     fetchInitialTask, 
-    consumeTask2ByGroup
 }
