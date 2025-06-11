@@ -91,6 +91,18 @@ const consumeDeleteTask2 = async () => {
     }
 };
 
+interface ChunkArray {
+    <T>(arr: T[], size: number): T[][];
+}
+
+const chunkArray: ChunkArray = <T>(arr: T[], size: number): T[][] => {
+    const result: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) {
+        result.push(arr.slice(i, i + size));
+    }
+    return result;
+};
+
 const consumeDeleteTask2ByGroup = async () => {
     try {
         const connection = await amqp.connect(connectionUrl);
@@ -112,60 +124,57 @@ const consumeDeleteTask2ByGroup = async () => {
             try {
                 const messageContent = msg.content.toString().trim();
                 const data = JSON.parse(messageContent);
-
-                const group_ids = data.group_ids
+                const group_ids = data.group_ids;
 
                 const matchPodData = await prisma.pod.findMany({
-                    where: {
-                        fk_group_id: {in: group_ids}
-                    }
-                })
+                    where: { fk_group_id: { in: group_ids } }
+                });
 
-                const matchPodId = matchPodData.map(id => id.id)
+                const matchPodId = matchPodData.map(id => id.id);
 
                 const matchTaskData = await prisma.task.findMany({
-                    where: {
-                        pod_id: {
-                            in: matchPodId
-                        }
-                    }
-                })
-                const matchTaskId = matchTaskData.map(id => id.id)
+                    where: { pod_id: { in: matchPodId } }
+                });
+
+                const matchTaskId = matchTaskData.map(id => id.id);
 
                 const message = {
-                    matchPodId: matchPodId, 
+                    matchPodId: matchPodId,
                     matchTaskId: matchTaskId
+                };
+
+                await bounceDeleteTaskDataToAdmin(message);
+
+                const BATCH_SIZE = 500;
+                const taskIdChunks = chunkArray(matchTaskId, BATCH_SIZE);
+
+                for (const chunk of taskIdChunks) {
+                    await prisma.igniter.deleteMany({
+                        where: { fk_task: { in: chunk } }
+                    });
+
+                    await prisma.last_state.deleteMany({
+                        where: { fk_task: { in: chunk } }
+                    });
+
+                    // Optional: delay untuk stabilisasi beban
+                    await new Promise(res => setTimeout(res, 50));
                 }
 
-                await bounceDeleteTaskDataToAdmin(message)
+                // Delete tasks in batch by pod_id
+                const podIdChunks = chunkArray(matchPodId, BATCH_SIZE);
+                for (const podChunk of podIdChunks) {
+                    await prisma.task.deleteMany({
+                        where: { pod_id: { in: podChunk } }
+                    });
 
-                const deleteIgniter = await prisma.igniter.deleteMany({
-                    where: {
-                        fk_task: {in: matchTaskId}
-                    }
-                });
-
-                const deleteLastState = await prisma.last_state.deleteMany({
-                    where: {
-                        fk_task: {
-                            in: matchTaskId
-                        }
-                    }
-                });
-
-                const deleteTask = await prisma.task.deleteMany({
-                    where: { 
-                        pod_id: {in: matchPodId} 
-                    },
-                });
-
-                const logDelete = {
-                    deleteIgniter: deleteIgniter, 
-                    deleteLastState: deleteLastState, 
-                    deleteTask: deleteTask
+                    await new Promise(res => setTimeout(res, 50));
                 }
 
-                console.log("task data deleted by group: ", logDelete);
+                console.log("✅ Task data deleted by group:", {
+                    group_ids,
+                    deletedTaskCount: matchTaskId.length
+                });
 
                 channel.ack(msg);
                 alreadyHandled = true;

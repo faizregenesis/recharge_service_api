@@ -1,6 +1,20 @@
 import prisma from '../../../prisma/prisma';
 import { v4 as uuidv4 } from 'uuid';
 
+const BATCH_SIZE = 500;
+
+function chunkArray<T>(array: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += size) {
+        chunks.push(array.slice(i, i + size));
+    }
+    return chunks;
+}
+
+function delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 const insertConnections = async (nodeIds: string[], connections: any[]) => {
     const result = [];
     for (const nodeId of nodeIds) {
@@ -14,8 +28,12 @@ const insertConnections = async (nodeIds: string[], connections: any[]) => {
             created_date: conn.created_date,
             deleted_at: conn.deleted_at
         }));
-        await prisma.connections.createMany({ data, skipDuplicates: true });
-        result.push(...data);
+        const chunks = chunkArray(data, BATCH_SIZE);
+        for (const chunk of chunks) {
+            await prisma.connections.createMany({ data: chunk, skipDuplicates: true });
+            result.push(...chunk);
+            await delay(50);
+        }
     }
     return result;
 };
@@ -32,8 +50,12 @@ const insertNodeButtons = async (nodeIds: string[], buttons: any[]) => {
             updated_date: btn.updated_date,
             created_date: btn.created_date
         }));
-        await prisma.node_button.createMany({ data, skipDuplicates: true });
-        result.push(...data);
+        const chunks = chunkArray(data, BATCH_SIZE);
+        for (const chunk of chunks) {
+            await prisma.node_button.createMany({ data: chunk, skipDuplicates: true });
+            result.push(...chunk);
+            await delay(50);
+        }
     }
     return result;
 };
@@ -52,8 +74,12 @@ const insertNodesOutput = async (nodeIds: string[], outputs: any[]) => {
             created_date: out.created_date,
             deleted_at: out.deleted_at
         }));
-        await prisma.nodes_output.createMany({ data, skipDuplicates: true });
-        result.push(...data);
+        const chunks = chunkArray(data, BATCH_SIZE);
+        for (const chunk of chunks) {
+            await prisma.nodes_output.createMany({ data: chunk, skipDuplicates: true });
+            result.push(...chunk);
+            await delay(50);
+        }
     }
     return result;
 };

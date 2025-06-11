@@ -35,7 +35,7 @@ const initTaskConsumer = async (channel: amqp.Channel) => {
     await channel.assertExchange(createExchangeGroup, 'fanout', { durable: true });
     const { queue } = await channel.assertQueue('', { exclusive: true });
     await channel.bindQueue(queue, createExchangeGroup, '');
-    channel.prefetch(1);
+    channel.prefetch(10);
 
     console.log(`\x1b[32mListening for TASK messages on: ${queue}\x1b[0m`);
 
@@ -48,44 +48,52 @@ const initTaskConsumer = async (channel: amqp.Channel) => {
                 where: { fk_group_id: { in: group_ids } }
             });
 
-            const createdTasks: any[] = [];
-            for (const pod of matchedPods) {
-                await prisma.$transaction(async (tx) => {
-                    const task = await tx.task.create({
-                        data: {
-                            task_code: data.task_code,
-                            pod_id: pod.id,
-                            task_type_id: data.task_type_id,
-                            created_date: data.created_date,
-                            update_date: data.update_date,
-                            deleted_at: data.deleted_at,
-                            task_json: data.task_json,
-                        }
-                    });
+            const BATCH_SIZE = 100;
+            const chunkArray = <T>(arr: T[], size: number): T[][] => {
+                const result: T[][] = [];
+                for (let i = 0; i < arr.length; i += size) {
+                    result.push(arr.slice(i, i + size));
+                }
+                return result;
+            };
 
-                    const igniter = await tx.igniter.create({
+            const chunks = chunkArray(matchedPods, BATCH_SIZE);
+            const createdTasks: any[] = [];
+
+            for (const chunk of chunks) {
+                for (const pod of chunk) {
+                    const taskData = {
+                        task_code: data.task_code,
+                        pod_id: pod.id,
+                        task_type_id: data.task_type_id,
+                        created_date: data.created_date,
+                        update_date: data.update_date,
+                        deleted_at: data.deleted_at,
+                        task_json: data.task_json
+                    };
+
+                    const task = await prisma.task.create({ data: taskData });
+
+                    const igniter = await prisma.igniter.create({
                         data: { code: igniters[0], fk_task: task.id }
                     });
 
-                    const lastState = await tx.last_state.create({
+                    const lastState = await prisma.last_state.create({
                         data: { code: last_state[0], fk_task: task.id }
                     });
 
                     createdTasks.push({
                         pod_id: pod.id,
-                        task: task,
-                        igniter: igniter,
+                        task,
+                        igniter,
                         last_state: lastState
                     });
-                });
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 100)); // jeda antar batch
             }
 
-            const message = {
-                group_ids,
-                data : createdTasks
-            };
-
-            await bounceTaskDataToAdmin(message)
+            await bounceTaskDataToAdmin({ group_ids, data: createdTasks });
 
             channel.ack(msg);
         } catch (err: any) {
@@ -99,7 +107,7 @@ const initNodeConsumer = async (channel: amqp.Channel) => {
     await channel.assertExchange(createNodeByGroup, 'fanout', { durable: true });
     const { queue } = await channel.assertQueue('', { exclusive: true });
     await channel.bindQueue(queue, createNodeByGroup, '');
-    channel.prefetch(1);
+    channel.prefetch(10);
 
     console.log(`\x1b[32mListening for NODE messages on: ${queue}\x1b[0m`);
 
@@ -112,26 +120,40 @@ const initNodeConsumer = async (channel: amqp.Channel) => {
                 where: { fk_group_id: { in: group_ids } }
             });
 
-            const insertedNodes: any[] = [];
-            for (const pod of matchedPods) {
-                const createdNode = await prisma.node.create({
-                    data: {
-                        code: node.code,
-                        pod_id: pod.id,
-                        label: node.label,
-                        type: node.type,
-                        position_x: node.position_x,
-                        position_y: node.position_y,
-                        inputs: node.inputs,
-                        pob_state: node.pob_state,
-                        template_style: node.template_style,
-                        updated_date: node.updated_date,
-                        created_date: node.created_date,
-                        deleted_at: node.deleted_at
-                    }
-                });
+            const BATCH_SIZE = 100;
+            const chunkArray = <T>(arr: T[], size: number): T[][] => {
+                const result: T[][] = [];
+                for (let i = 0; i < arr.length; i += size) {
+                    result.push(arr.slice(i, i + size));
+                }
+                return result;
+            };
 
-                insertedNodes.push(createdNode);
+            const chunks = chunkArray(matchedPods, BATCH_SIZE);
+            const insertedNodes: any[] = [];
+
+            for (const chunk of chunks) {
+                const created = await Promise.all(
+                    chunk.map(pod => prisma.node.create({
+                        data: {
+                            code: node.code,
+                            pod_id: pod.id,
+                            label: node.label,
+                            type: node.type,
+                            position_x: node.position_x,
+                            position_y: node.position_y,
+                            inputs: node.inputs,
+                            pob_state: node.pob_state,
+                            template_style: node.template_style,
+                            updated_date: node.updated_date,
+                            created_date: node.created_date,
+                            deleted_at: node.deleted_at
+                        }
+                    }))
+                );
+
+                insertedNodes.push(...created);
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
 
             const nodeIds = insertedNodes.map(n => n.id);
@@ -139,17 +161,14 @@ const initNodeConsumer = async (channel: amqp.Channel) => {
             const insertedNodeButtons = await insertNodeButtons(nodeIds, node_buttons);
             const insertedNodesOutput = await insertNodesOutput(nodeIds, nodes_output);
 
-            // console.log("node Data by group", insertedNodes) ;
-
             const message = {
-                data: insertedNodes, 
-                connections: insertedConnections, 
-                nodeButton: insertedNodeButtons, 
+                data: insertedNodes,
+                connections: insertedConnections,
+                nodeButton: insertedNodeButtons,
                 nodeOutput: insertedNodesOutput
-            }
+            };
 
-            await bounceNodeDataToAdmin(message)
-
+            await bounceNodeDataToAdmin(message);
             channel.ack(msg);
         } catch (err: any) {
             console.error("❌ Error processing NODE message:", err.message);

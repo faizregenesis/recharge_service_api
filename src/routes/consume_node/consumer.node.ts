@@ -250,6 +250,20 @@ const consumeDeleteNodeData = async () => {
     }
 };
 
+interface ChunkArray {
+    <T>(arr: T[], size: number): T[][];
+}
+
+const chunkArray: ChunkArray = <T>(arr: T[], size: number): T[][] => {
+    const result: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) {
+        result.push(arr.slice(i, i + size));
+    }
+    return result;
+};
+
+const BATCH_SIZE = 500;
+
 const consumeDeleteNodeDataGroup = async () => {
     try {
         const connection = await amqp.connect(`${connectionUrl}`);
@@ -269,69 +283,59 @@ const consumeDeleteNodeDataGroup = async () => {
             try {
                 const messageContent = msg.content.toString();
                 const data = JSON.parse(messageContent);
-                const group_ids = data.group_ids
+                const group_ids = data.group_ids;
+
                 const matchingPodData = await prisma.pod.findMany({
-                    where: {
-                        fk_group_id: {in: group_ids}
-                    }
-                })
-                const matchPodId = matchingPodData.map(id => id.id)
+                    where: { fk_group_id: { in: group_ids } }
+                });
+
+                const matchPodId = matchingPodData.map(id => id.id);
 
                 const nodeData = await prisma.node.findMany({
-                    where: {
-                        pod_id: {in: matchPodId}
-                    }
-                })
-                const nodeIds = nodeData.map(id => id.id)
-                const message = {
-                    nodeIds: nodeIds
+                    where: { pod_id: { in: matchPodId } }
+                });
+
+                const nodeIds = nodeData.map(id => id.id);
+
+                const message = { nodeIds: nodeIds };
+                await bounceDeleteNodeDataToAdmin(message);
+
+                const nodeIdChunks = chunkArray(nodeIds, BATCH_SIZE);
+
+                for (const chunk of nodeIdChunks) {
+                    await prisma.connections.deleteMany({
+                        where: { fk_node_id: { in: chunk } }
+                    });
+
+                    await prisma.node_button.deleteMany({
+                        where: { fk_node_id: { in: chunk } }
+                    });
+
+                    await prisma.nodes_output.deleteMany({
+                        where: { fk_node_id: { in: chunk } }
+                    });
+
+                    // Delay untuk stabilisasi sistem
+                    await new Promise(res => setTimeout(res, 50));
                 }
 
-                await bounceDeleteNodeDataToAdmin(message)
+                for (const chunk of nodeIdChunks) {
+                    await prisma.node.deleteMany({
+                        where: { id: { in: chunk } }
+                    });
 
-                const deleteConn = await prisma.connections.deleteMany({
-                    where: { 
-                        fk_node_id: { 
-                            in: nodeIds 
-                        } 
-                    }
-                });
-
-                const deleteNodeButton = await prisma.node_button.deleteMany({
-                    where: { 
-                        fk_node_id: { 
-                            in: nodeIds 
-                        } 
-                    }
-                });
-
-                const deleteNodeOutput = await prisma.nodes_output.deleteMany({
-                    where: { 
-                        fk_node_id: { 
-                            in: nodeIds 
-                        } 
-                    }
-                });
-
-                const deleteNode = await prisma.node.deleteMany({
-                    where: { 
-                        id: { 
-                            in: nodeIds 
-                        } 
-                    }
-                });
-
-                const deleteNodeLog = {
-                    deleteConn: deleteConn, 
-                    deleteNodeButton: deleteNodeButton,
-                    deleteNodeOutput: deleteNodeOutput, 
-                    deleteNode: deleteNode
+                    await new Promise(res => setTimeout(res, 50));
                 }
-                console.log("node data deleted by group", deleteNodeLog);
+
+                console.log("✅ Node data deleted by group:", {
+                    group_ids,
+                    deletedNodeCount: nodeIds.length
+                });
 
                 channel.ack(msg);
+
             } catch (error: any) {
-                console.error('\x1b[31mError processing message:', error.message, '\x1b[0m');
+                console.error('\x1b[31m❌ Error processing message:', error.message, '\x1b[0m');
 
                 try {
                     channel.nack(msg, false, true);
@@ -342,7 +346,7 @@ const consumeDeleteNodeDataGroup = async () => {
         });
 
     } catch (error: any) {
-        console.error('\x1b[31mError initializing consumer:', error.message, '\x1b[0m');
+        console.error('\x1b[31m❌ Error initializing consumer:', error.message, '\x1b[0m');
     }
 };
 
