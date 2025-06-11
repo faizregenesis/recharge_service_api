@@ -94,11 +94,11 @@ import {
 const runFetchFunctionsInOrder = async () => {
     console.log("Starting data synchronization...");
 
-    // await fetchInitialVersionData()
-    // await fetchInitialGroupeData()
-    // await fetchInitialPodData()
-    // await fetchInitialTaskType() 
-    // await fetchInitialTask()
+    await fetchInitialVersionData()
+    await fetchInitialGroupeData()
+    await fetchInitialPodData()
+    await fetchInitialTaskType() 
+    await fetchInitialTask()
 
     console.log("🎉 All Starting data synchronization executed successfully in order.");
 };

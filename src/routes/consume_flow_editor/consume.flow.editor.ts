@@ -73,17 +73,16 @@ const initTaskConsumer = async (channel: amqp.Channel) => {
 
                     createdTasks.push({
                         pod_id: pod.id,
-                        task,
-                        igniter,
+                        task: task,
+                        igniter: igniter,
                         last_state: lastState
                     });
                 });
             }
 
             const message = {
-                created_at: new Date().toISOString(),
                 group_ids,
-                results: createdTasks
+                data : createdTasks
             };
 
             await bounceTaskDataToAdmin(message)
@@ -107,7 +106,7 @@ const initNodeConsumer = async (channel: amqp.Channel) => {
     channel.consume(queue, async (msg) => {
         if (!msg) return;
         try {
-            const { group_ids, node, connections, node_buttons, nodes_output, sharedCodeMap } = JSON.parse(msg.content.toString());
+            const { group_ids, node, connections, node_buttons, nodes_output } = JSON.parse(msg.content.toString());
 
             const matchedPods = await prisma.pod.findMany({
                 where: { fk_group_id: { in: group_ids } }
@@ -139,6 +138,8 @@ const initNodeConsumer = async (channel: amqp.Channel) => {
             const insertedConnections = await insertConnections(nodeIds, connections);
             const insertedNodeButtons = await insertNodeButtons(nodeIds, node_buttons);
             const insertedNodesOutput = await insertNodesOutput(nodeIds, nodes_output);
+
+            // console.log("node Data by group", insertedNodes) ;
 
             const message = {
                 data: insertedNodes, 

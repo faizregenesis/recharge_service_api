@@ -1,7 +1,6 @@
 import amqp from 'amqplib';
 import prisma from '../../../prisma/prisma';
 import dotenv from  "dotenv"
-// import { updateSignal } from '../../processor/flow'
 import { loginToAdmin } from "../../login.to.admin";
 import axios from "axios";
 dotenv.config(); 
