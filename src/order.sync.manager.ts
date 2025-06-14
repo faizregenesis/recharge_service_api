@@ -91,6 +91,10 @@ import {
     consumeDeleteNodeDataGroup
 } from './routes/consume_node/consumer.node'
 
+import {
+    consumeReplaceExperienceData
+} from './routes/consume_rwplace_experiences/consumer.experiences'
+
 const runFetchFunctionsInOrder = async () => {
     console.log("Starting data synchronization...");
 
@@ -141,6 +145,8 @@ const runFunctionsInOrder = async () => {
         await consumeDeleteNodeData()
         await consumeTask2()
         await consumeNodeData()
+
+        await consumeReplaceExperienceData()
 
         // ruwet ne adohhh 
         await consumeDeleteTask2ByGroup()
