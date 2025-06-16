@@ -177,15 +177,26 @@ const consumeDeleteExperiencesData = async () => {
                             }
                         })
 
-                        const deleteExperience = await prisma.experiences2.delete({
+                        const existing = await prisma.experiences2.findUnique({
                             where: {
-                                id: data.id, 
+                                id: data.id,
                                 pod_id: data.pod_id
                             }
-                        })
+                        });
+
+                            if (existing) {
+                                const deleteExperience = await prisma.experiences2.delete({
+                                    where: {
+                                        id: data.id,
+                                        pod_id: data.pod_id
+                                    }
+                                });
+                                console.log("exprience data deleted: ", deleteExperience.id);
+                            } else {
+                                console.log(`Data with id=${data.id} dan pod_id=${data.pod_id} not found, skip delete data`);
+                            }
 
                         console.log("detail exprience data deleted: ", deleteDetailExperience);
-                        console.log("exprience data deleted: ", deleteExperience.id);
                     } else {
                         console.log("delete experience data is not for this pod");
                     }
