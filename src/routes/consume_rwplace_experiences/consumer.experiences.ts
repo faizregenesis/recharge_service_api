@@ -111,6 +111,7 @@ const consumeReplaceExperienceData = async () => {
                                     binaural_beats_isochronic_tones: detail.binaural_beats_isochronic_tones,
                                     direct_neutral_stimulation: detail.direct_neutral_stimulation,
                                     duration: detail.duration,
+                                    scent: detail.scent,
                                     uva: detail.uva,
                                     uvb: detail.uvb,
                                     uvc: detail.uvc,
@@ -176,6 +177,11 @@ const consumeReplaceExperienceData = async () => {
                                         direct_neutral_stimulation: detail.direct_neutral_stimulation,
                                         duration: detail.duration,
                                         experiences: { connect: { id: createExperience.id } },
+                                        pemf_value: detail.pemf_value, 
+                                        scent: detail.scent,
+                                        lamp: detail.lamp, 
+                                        song: detail.song, 
+                                        video: detail.video
                                     },
                                 });
 
@@ -194,6 +200,10 @@ const consumeReplaceExperienceData = async () => {
                                         console.error("error burst create:", e);
                                     }
                                 }
+
+                                // console.log({
+                                //     detail_experience: createDetail,
+                                // });
 
                                 results.push({
                                     experience: createExperience,
