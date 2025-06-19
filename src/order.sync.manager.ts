@@ -43,7 +43,7 @@ import {
     consumeCreateSelfDevSoundgGroup, 
     consumeUpdateSelfDevSoundgGroup, 
     deleteSelfDevSoundData, 
-    deleteSelfDevSoundDataGroup
+    deleteSelfDevSoundDataGroup, 
 } from './routes/consume_self_dev_sound_bounce/consumer.self.dev.sounds'
 
 import {
@@ -61,6 +61,7 @@ import {
 import {
     consumeInsertSelfDevData,
     deleteSelfDevData, 
+    consumeReplaceSelfDevData
 } from './routes/consume_self_development/consumer.self.development'
 
 import {
@@ -147,6 +148,7 @@ const runFunctionsInOrder = async () => {
         await consumeNodeData()
 
         await consumeReplaceExperienceData()
+        await consumeReplaceSelfDevData()
 
         // ruwet ne adohhh 
         await consumeDeleteTask2ByGroup()

@@ -78,11 +78,17 @@ const initTaskConsumer = async (channel: amqp.Channel) => {
                     console.log("CONSUME TASK DATA: ", task.template_style);
 
                     const igniter = await prisma.igniter.create({
-                        data: { code: igniters[0], fk_task: task.id }
+                        data: { 
+                            code: igniters[0], 
+                            fk_task: task.id 
+                        }
                     });
 
                     const lastState = await prisma.last_state.create({
-                        data: { code: last_state[0], fk_task: task.id }
+                        data: { 
+                            code: last_state[0], 
+                            fk_task: task.id 
+                        }
                     });
 
                     createdTasks.push({
