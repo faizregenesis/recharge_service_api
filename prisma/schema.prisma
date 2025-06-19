@@ -346,6 +346,7 @@ model experiences2 {
 
   pod                    pod?                     @relation(fields: [pod_id], references: [id])
   order_experience       Int?
+  total_usage_time       Int?
 
   created_date           DateTime?                @default(now()) @db.Timestamptz(6)
   update_date            DateTime?                @default(now()) @db.Timestamptz(6)
@@ -549,6 +550,7 @@ model self_development_sound2 {
   self_dev_order      Int? 
   order               Int?
   video               String?
+  total_usage_time    Int?
 
   self_development    self_development2?  @relation(fields: [self_development_id], references: [id])
 

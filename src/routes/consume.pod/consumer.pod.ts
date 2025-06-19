@@ -499,40 +499,67 @@ const consumePodData = async () => {
                     }
 
                     await Promise.all(
-                    data.selfDevToPod.map((selfDev: any) =>
-                        prisma.self_development2.upsert({
-                        where: { id: selfDev.id },
-                        create: {
-                            id: selfDev.id,
-                            self_development_name: selfDev.self_development_name,
-                            description: selfDev.description,
-                            icon: selfDev.icon,
-                            is_explore: selfDev.is_explore,
-                            created_date: selfDev.created_date,
-                            updated_date: selfDev.updated_date,
-                            deleted_at: selfDev.deleted_at,
-                            pod: {
-                            connect: { id: selfDev.fk_pod_id }
-                            }
-                        },
-                        update: {
-                            self_development_name: selfDev.self_development_name,
-                            description: selfDev.description,
-                            icon: selfDev.icon,
-                            is_explore: selfDev.is_explore,
-                            updated_date: selfDev.updated_date,
-                            deleted_at: selfDev.deleted_at
-                        }
-                        })
-                    )
+                        data.selfDevToPod.map((selfDev: any) =>
+                            prisma.self_development2.upsert({
+                            where: { id: selfDev.id },
+                                create: {
+                                    id: selfDev.id,
+                                    self_development_name: selfDev.self_development_name,
+                                    description: selfDev.description,
+                                    icon: selfDev.icon,
+                                    is_explore: selfDev.is_explore,
+                                    created_date: selfDev.created_date,
+                                    updated_date: selfDev.updated_date,
+                                    deleted_at: selfDev.deleted_at,
+                                    pod: {
+                                    connect: { id: selfDev.fk_pod_id }
+                                    }
+                                },
+                                update: {
+                                    self_development_name: selfDev.self_development_name,
+                                    description: selfDev.description,
+                                    icon: selfDev.icon,
+                                    is_explore: selfDev.is_explore,
+                                    updated_date: selfDev.updated_date,
+                                    deleted_at: selfDev.deleted_at
+                                }
+                            })
+                        )
                     );
+
+                    // await Promise.all(
+                    //     data.selfDevSoundToPod.map((selfDevSound: any) =>
+                    //         prisma.self_development_sound2.create({
+                    //             // where: { id: selfDevSound.id },
+                    //             data: selfDevSound
+                    //             // update: selfDevSound
+                    //         })
+                    //     )
+                    // );
 
                     await Promise.all(
                         data.selfDevSoundToPod.map((selfDevSound: any) =>
-                                prisma.self_development_sound2.upsert({
-                                where: { id: selfDevSound.id },
-                                create: selfDevSound,
-                                update: selfDevSound
+                            prisma.self_development_sound2.create({
+                            data: {
+                                id: selfDevSound.id,
+                                sound_code: selfDevSound.sound_code,
+                                duration: selfDevSound.duration,
+                                description: selfDevSound.description,
+                                sound_path: selfDevSound.sound_path,
+                                file_path: selfDevSound.file_path,
+                                title: selfDevSound.title,
+                                caption: selfDevSound.caption,
+                                self_dev_order: selfDevSound.self_dev_order,
+                                order: selfDevSound.order,
+                                video: selfDevSound.video,
+                                total_usage_time: selfDevSound.total_usage_time,
+                                created_date: selfDevSound.created_date,
+                                updated_date: selfDevSound.updated_date,
+                                deleted_at: selfDevSound.deleted_at,
+                                self_development: {
+                                connect: { id: selfDevSound.self_development_id }
+                                }
+                            }
                             })
                         )
                     );
