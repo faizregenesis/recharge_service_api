@@ -381,6 +381,7 @@ model detail_experience2 {
 
   scent                           String? 
   burst_time                      burst_time[]
+  generator_frequency             generator_frequency[]
 
   experiences                     experiences2 @relation(fields: [experience_id], references: [id])
 
@@ -400,6 +401,20 @@ model burst_time {
   created_at           DateTime           @default(now()) @db.Timestamptz(6)
   updated_at           DateTime           @default(now()) @db.Timestamptz(6)
   deleted_at           DateTime?          @db.Timestamptz(6)
+}
+
+model generator_frequency {
+  id                              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  frequency                       Int?
+  start_time                      String?
+  duration                        String?
+
+  fk_detail_experience            String?             @db.Uuid
+
+  detail_experience               detail_experience2?  @relation(fields: [fk_detail_experience], references: [id])
+  created_at                      DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at                      DateTime            @default(now()) @db.Timestamptz(6)
+  deleted_at                      DateTime?           @db.Timestamptz(6)
 }
 
 enum firmware_version_status {
