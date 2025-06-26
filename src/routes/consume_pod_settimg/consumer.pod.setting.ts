@@ -37,7 +37,7 @@ const consumeCreatePodSetting = async () => {
                     const messageContent = msg.content.toString();
                     const data = JSON.parse(messageContent);
 
-                    console.log("ini adalah data yang didapat dari admin: ", data);
+                    // console.log("ini adalah data yang didapat dari admin: ", data);
 
                     const { experience_id, pod_id,  detail_experience } = data;
 
@@ -80,7 +80,8 @@ const consumeCreatePodSetting = async () => {
                             lamp,
                             sound_scape,
                             scent,
-                            burst_time
+                            burst_time, 
+                            generator_frequency
                         } = detail;
 
                         const newDetail = await prisma.detail_experience2.upsert({
@@ -166,6 +167,49 @@ const consumeCreatePodSetting = async () => {
                                         }
                                     });
                                     console.log("burst time updated", updateBurst);
+                                }
+                            }
+                        }
+
+                        if (Array.isArray(generator_frequency)) {
+                            const frequencyData = generator_frequency.map(({ id, start_time, duration, frequency }) => ({
+                                id: id || undefined,
+                                fk_detail_experience: newDetail.id,
+                                start_time,
+                                duration, 
+                                frequency
+                            }));
+
+                            for (const frequency of frequencyData) {
+                                const existFrequencyData = await prisma.generator_frequency.findMany({
+                                    where: {
+                                        id: frequency.id
+                                    }
+                                })
+                                if (existFrequencyData.length === 0) {
+                                    const createFrequency = await prisma.generator_frequency.createMany({
+                                        data : {
+                                            id                   : frequency.id, 
+                                            frequency            : frequency.frequency, 
+                                            start_time           : frequency.start_time,
+                                            duration             : frequency.duration,
+                                            fk_detail_experience : newDetail.id,
+                                            updated_at           : new Date()
+                                        }
+                                    });
+                                    console.log("frequency created", createFrequency);
+                                } else {
+                                    const updateFrequency = await prisma.generator_frequency.updateMany({
+                                        where: { id: frequency.id },
+                                        data : {
+                                            start_time           : frequency.start_time,
+                                            frequency            : frequency.frequency, 
+                                            duration             : frequency.duration,
+                                            fk_detail_experience : newDetail.id,
+                                            updated_at           : new Date()
+                                        }
+                                    });
+                                    console.log("frequency", updateFrequency);
                                 }
                             }
                         }
@@ -512,7 +556,6 @@ const consumeCreatePodSettingGroup = async () => {
                     });
 
                     const burstTimeData = [];
-
                     for (const detail of newDetails) {
                         for (const burst of detail_experience[0].burst_time) {
                             if (!burst.start_time || !burst.duration) continue;
@@ -525,6 +568,22 @@ const consumeCreatePodSettingGroup = async () => {
                             });
                         }
                     }
+
+                    const frequencyDatas: any[] = [];
+                    data.data.forEach((experience: any) => {
+                        experience.detail_experience?.forEach((detail: any) => {
+                            detail.generator_frequency?.forEach((frequency: any) => {
+                                const frequencyData = {
+                                    id: frequency.id,
+                                    frequency: frequency.frequency, 
+                                    fk_detail_experience: frequency.fk_detail_experience, 
+                                    start_time: frequency.start_time, 
+                                    duration: frequency.duration
+                                } 
+                                frequencyDatas.push(frequencyData);
+                            });
+                        });
+                    });
 
                     // Gunakan createMany untuk burst_time juga
                     if (burstTimeData.length > 0) {
@@ -583,7 +642,7 @@ const consumeUpdatePodSetting = async () => {
                 const messageContent = msg.content.toString();
                 const data = JSON.parse(messageContent);
 
-                console.log("ini adalah data yang didapatkan dari admin: ", data);
+                // console.log("ini adalah data yang didapatkan dari admin: ", data);
 
                 const { experience_id, detail_experience } = data;
                 if (!experience_id || !Array.isArray(detail_experience)) {
@@ -592,7 +651,7 @@ const consumeUpdatePodSetting = async () => {
                 }
 
                 for (const detail of detail_experience) {
-                    const { id: detailId, burst_time, ...restDetail } = detail;
+                    const { id: detailId, burst_time, generator_frequency,  ...restDetail } = detail;
 
                     const updatedDetail = detailId
                     ? await prisma.detail_experience2.update({
@@ -651,6 +710,30 @@ const consumeUpdatePodSetting = async () => {
                                 });
                                 console.log("burst time updated", updateBurst);
                             }
+                        }
+                    }
+
+                    if (Array.isArray(generator_frequency)) {
+                        // Delete oldgenerator_frequency first to avoid conflict
+                        await prisma.generator_frequency.deleteMany({
+                            where: { 
+                                fk_detail_experience: updatedDetail.id 
+                            }
+                        });
+
+                        const frequencyData = generator_frequency.map(({ start_time, duration, frequency }) => ({
+                            start_time,
+                            duration,
+                            frequency, 
+                            fk_detail_experience: updatedDetail.id,
+                            updated_at: new Date()
+                        }));
+
+                        if (frequencyData.length > 0) {
+                            await prisma.generator_frequency.createMany({ data: frequencyData });
+                            console.log("Frequency created for detail ID:", updatedDetail.id);
+                        } else {
+                            console.log("No frequency data to create.");
                         }
                     }
                 }
