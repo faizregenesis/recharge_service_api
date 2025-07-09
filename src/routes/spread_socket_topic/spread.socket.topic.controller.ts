@@ -3,6 +3,11 @@ import { PrismaClient } from "@prisma/client";
 import axios from "axios"; 
 const prisma = new PrismaClient();
 
+import {
+    quePodTopicData, 
+    queSocketTopicData
+} from './publish.to..queue';
+
 const socketTopic = async (req: Request, res: Response): Promise<any> => {
     try {
         const propertiesData = await prisma.socket_topics.findMany({
@@ -111,7 +116,7 @@ const addSocketTopic = async (req: Request, res: Response): Promise<any> => {
             keyword,
             auth_status,
         } = req.body
-        
+
         const propertiesData = await prisma.socket_topics.create({
             data: { 
                 module_name,
@@ -127,7 +132,9 @@ const addSocketTopic = async (req: Request, res: Response): Promise<any> => {
                 auth_status,
             },
         });
-        
+
+        await queSocketTopicData(propertiesData)
+
         return res.status(200).json({ 
             message: "success to add socket topic data", 
             data: propertiesData 
@@ -170,6 +177,8 @@ const addpPodTopic = async (req: Request, res: Response): Promise<any> => {
                 keyword, 
             },
         });
+
+        await quePodTopicData(propertiesData)
 
         return res.status(200).json({ 
             message: "success to add pod topic data", 

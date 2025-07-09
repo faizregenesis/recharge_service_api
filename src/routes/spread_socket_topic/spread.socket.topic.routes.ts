@@ -17,6 +17,7 @@ class socketTopicRoutes {
 
         this.router.post('/socket/topic', addSocketTopic);
         this.router.post('/pod/topic', addpPodTopic);
+
         this.router.post('/task/type', addTaskType);
     }
 }
