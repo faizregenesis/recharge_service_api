@@ -253,14 +253,28 @@ const consumeDeletePodSetting = async () => {
                     const order_experience = data.order_experience
                     const group_ids = data.group_ids
 
+                    const whereClause: any = {
+                        id: detailId,
+                        // order: { in: order },
+                    };
+
+                    if (Array.isArray(order_experience) && order_experience.length > 0) {
+                        whereClause.order_experience = { in: order_experience };
+                    }
+
+                    // const deleteDetailExperience = await prisma.detail_experience2.deleteMany({
+                    //     where: whereClause,
+                    // });
+
                     const deleteDetailExperience = await prisma.detail_experience2.deleteMany({
                         where: {
                             id: detailId, 
-                            order: {in: order}, 
-                            order_experience: {in: order_experience}
+                            // order: {in: order}, 
+                            // order_experience: {
+                            //     in: order_experience || null
+                            // }
                         }
                     })
-
                     console.log("detail Experience deleted", deleteDetailExperience);
 
                     channel.ack(msg);
