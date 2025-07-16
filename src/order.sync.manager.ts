@@ -5,7 +5,8 @@ import {
 } from './routes/comsume_user/consumer.pod.user';
 
 import {
-    syncDisclaimerData
+    syncDisclaimerData, 
+    syncUpdateDisclaimerData
 } from './routes/consumeDisclaimer/consume.disclaimer';
 
 import {
@@ -96,6 +97,10 @@ import {
     consumeReplaceExperienceData
 } from './routes/consume_rwplace_experiences/consumer.experiences'
 
+import {
+    consumeUpsertBioFeedbackByGroup
+} from './routes/consume_bio_feedback_config/consumer.self.development'
+
 const runFetchFunctionsInOrder = async () => {
     console.log("Starting data synchronization...");
 
@@ -116,6 +121,7 @@ const runFunctionsInOrder = async () => {
         await consumeUsersDataUpdate()
         await consumeResetPassword()
         await syncDisclaimerData()
+        await syncUpdateDisclaimerData()
         await consumeUpdateQuestionMatrix()
         await consumeInsertQuestionMatrix() 
         await consumeGroupData()
@@ -154,6 +160,8 @@ const runFunctionsInOrder = async () => {
         await consumeDeleteTask2ByGroup()
         await consumeDeleteNodeDataGroup()
         await consumeTaskAndNodeByGroup()
+
+        await consumeUpsertBioFeedbackByGroup()
 
         console.log('All functions executed successfully in order');
     } catch (error) {
