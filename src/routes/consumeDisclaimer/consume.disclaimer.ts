@@ -2,13 +2,15 @@ import amqp from 'amqplib';
 import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
 import {
-    sendDisclaimerToPods
+    sendDisclaimerToPods, 
+    updateDisclaimerToPods
 } from './publish.to..queue';
 
 dotenv.config();
 const prisma = new PrismaClient();
 
 const disclaimerSpreadExchange = `${process.env.ANSWER_EXCHANGE}`;
+const updateDisclaimerSpreadExchange = `${process.env.UPDATE_ANSWER_EXCHANGE}`;
 const connectionUrl = process.env.RABBITMQ_URL;
 
 const syncDisclaimerData = async () => {
@@ -94,6 +96,67 @@ const syncDisclaimerData = async () => {
     }
 };
 
+const syncUpdateDisclaimerData = async () => {
+    try {
+        const connection = await amqp.connect(`${connectionUrl}`);
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(updateDisclaimerSpreadExchange, 'fanout', { durable: true });
+        const { queue } = await channel.assertQueue('', { exclusive: true });
+        await channel.bindQueue(queue, updateDisclaimerSpreadExchange, '');
+        channel.prefetch(1);
+
+        console.log(`\x1b[32mService is waiting for messages on queue (sync update disclaimer data): ${queue}\x1b[0m`);
+
+        channel.consume(queue, async (msg) => {
+            if (msg) {
+                try {
+                    const messageContent = msg.content.toString();
+                    const data = JSON.parse(messageContent);
+
+                    await updateDisclaimerToPods(data)
+
+                    const updatedResults = [];
+
+                    for (const { fk_question_id, answer } of data.answers) {
+                        const updateResult = await prisma.terms_and_conditions_answers.updateMany({
+                            where: {
+                                fk_user_id: data.user_id,
+                                fk_question_id: fk_question_id,
+                                terms_and_conditions_questions: {
+                                    active: true,
+                                    deleted_at: null,
+                                },
+                            },
+                            data: { answer }
+                        });
+
+                        updatedResults.push({
+                            fk_question_id,
+                            answer,
+                            userId: data.user_id, 
+                            updatedCount: updateResult.count
+                        });
+                    }
+
+                    console.log("\x1b[32mAll updates completed:\x1b[0m");
+                    // console.table(updatedResults);
+
+                    console.log("\x1b[32mSuccessfully update disclaimer data\x1b[0m");
+                    channel.ack(msg);
+                } catch (error) {
+                    console.error('\x1b[31mError processing message:', error, '\x1b[0m');
+                    channel.nack(msg, false, true);
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('\x1b[31mError initializing consumer:', error, '\x1b[0m');
+    }
+};
+
 export { 
-    syncDisclaimerData 
+    syncDisclaimerData, 
+    syncUpdateDisclaimerData 
 };
