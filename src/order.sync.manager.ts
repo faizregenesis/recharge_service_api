@@ -96,6 +96,11 @@ import {
     consumeReplaceExperienceData
 } from './routes/consume_rwplace_experiences/consumer.experiences'
 
+import {
+    consumeCreatePodTopic,
+    consumeCreateSocketTopic 
+} from './routes/consume_pod_topic/consumer.pod_topic'
+
 const runFetchFunctionsInOrder = async () => {
     console.log("Starting data synchronization...");
 
@@ -154,6 +159,9 @@ const runFunctionsInOrder = async () => {
         await consumeDeleteTask2ByGroup()
         await consumeDeleteNodeDataGroup()
         await consumeTaskAndNodeByGroup()
+
+        await consumeCreatePodTopic()
+        await consumeCreateSocketTopic() 
 
         console.log('All functions executed successfully in order');
     } catch (error) {
